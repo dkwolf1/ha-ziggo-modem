@@ -1,0 +1,10 @@
+{
+  "name": "Ziggo Modem",
+  "content_in_root": false,
+  "domains": ["ziggo_modem"],
+  "homeassistant": "2026.4.0",
+  "iot_class": "local_polling",
+  "render_readme": true,
+  "country": "NL",
+  "icon": "icon.png"
+}
