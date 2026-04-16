@@ -1,0 +1,12 @@
+{
+  "domain": "ziggo_modem",
+  "name": "Ziggo Modem",
+  "version": "0.1.0",
+  "documentation": "https://github.com/dkwolf1/ziggo_modem",
+  "issue_tracker": "https://github.com/dkwolf1/ziggo_modem/issues",
+  "config_flow": true,
+  "iot_class": "local_polling",
+  "integration_type": "hub",
+  "requirements": [],
+  "codeowners": ["@dkwolf1"]
+}
