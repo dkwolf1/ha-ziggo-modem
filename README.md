@@ -1,37 +1,74 @@
-# Ziggo Modem - Home Assistant Integration
+# Ziggo Modem
 
-Local Home Assistant integration for Ziggo cable modems (Sagemcom).
+[![GitHub Release](https://img.shields.io/github/v/release/dkwolf1/ha-ziggo-modem?style=for-the-badge)](https://github.com/dkwolf1/ha-ziggo-modem/releases)
+[![GitHub Activity](https://img.shields.io/github/commit-activity/y/dkwolf1/ha-ziggo-modem?style=for-the-badge)](https://github.com/dkwolf1/ha-ziggo-modem/commits/main)
+[![License](https://img.shields.io/github/license/dkwolf1/ha-ziggo-modem?style=for-the-badge)](LICENSE)
 
-## Features
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=for-the-badge)](https://github.com/pre-commit/pre-commit)
+[![Ruff](https://img.shields.io/badge/code%20style-ruff-000000?style=for-the-badge)](https://github.com/astral-sh/ruff)
+[![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://hacs.xyz)
+
+[![Maintained](https://img.shields.io/badge/maintained-yes-brightgreen?style=for-the-badge)]()
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.4%2B-blue?style=for-the-badge)](https://www.home-assistant.io/)
+
+---
+
+## 🔧 Ziggo Modem - Home Assistant Integration
+
+Local Home Assistant integration for Ziggo (Sagemcom) cable modems.
+
+This integration provides detailed insight into your DOCSIS connection, including signal quality, channel statistics, error rates and connectivity health — all locally, without cloud dependencies.
+
+---
+
+## ✨ Features
 
 - Modem status & uptime
-- Downstream / upstream signal analysis
-- Error monitoring (SC-QAM / OFDM)
+- Downstream signal analysis (power, SNR, errors)
+- Upstream signal monitoring (power, timeouts)
+- SC-QAM vs OFDM error separation
 - Speed profile detection (download / upload)
-- Cable quality assessment
-- Binary sensors for issues and connectivity
+- Cable quality classification (Goed / Matig / Slecht)
+- Binary sensors for connection issues
+- Fully local API (no cloud)
 
-## Installation
+---
 
-### HACS (recommended)
+## 📦 Installation
 
-1. Add this repository as a custom repository
-2. Select "Integration"
-3. Install "Ziggo Modem"
-4. Restart Home Assistant
+### HACS (Recommended)
+
+1. Go to **HACS → Integrations**
+2. Click **⋮ → Custom repositories**
+3. Add this repository  
+4. Select **Integration**
+5. Install **Ziggo Modem**
+6. Restart Home Assistant
+
+---
 
 ### Manual
 
-1. Copy `custom_components/ziggo_modem` into your HA config
+1. Copy: custom_components/ziggo_modem into your Home Assistant config directory
+
 2. Restart Home Assistant
 
-## Configuration
+---
 
-Use the UI:
+## ⚙️ Configuration
 
-Settings → Devices & Services → Add Integration → Ziggo Modem
+The integration is fully UI-based:
 
-## Sensors
+**Settings → Devices & Services → Add Integration → Ziggo Modem**
+
+Enter:
+- IP address (default: `192.168.100.1`)
+- Username
+- Password
+
+---
+
+## 📊 Sensors
 
 ### General
 - Modem Status
@@ -40,39 +77,54 @@ Settings → Devices & Services → Add Integration → Ziggo Modem
 - Kabelkwaliteit
 
 ### Downstream
-- Power
-- SNR
-- Errors (SC-QAM / OFDM)
+- Downstream Power (dBmV)
+- Downstream SNR (dB)
 - Channel count
+- Locked channels
+- Errors (SC-QAM / OFDM)
 
 ### Upstream
-- Power
-- Timeouts
+- Upstream Power (dBmV)
+- Channel count
+- T3 timeouts
 
-### Profile
-- Download Profiel
-- Upload Profiel
+### Speed Profile
+- Download Profiel (Mbit/s)
+- Upload Profiel (Mbit/s)
 
-## Binary Sensors
+---
+
+## 🚨 Binary Sensors
 
 - Kabelprobleem
 - Internet Toegang Verloren
-- Upstream Timeouts
+- Upstream Timeouts Aanwezig
 
-## Notes
+---
 
-- Uses undocumented local modem API
-- Works only in local network (192.168.100.1)
-- OFDM values may be vendor-specific
+## ⚠️ Notes
 
-## Disclaimer
+- Uses undocumented Ziggo modem API
+- Works only locally (192.168.100.1)
+- OFDM metrics may vary per modem firmware
+- Designed for Sagemcom-based Ziggo modems
+
+---
+
+## ⚖️ Disclaimer
 
 This project is not affiliated with Ziggo.
 
-## Contributing
+Use at your own risk. API endpoints may change with firmware updates.
 
-See CONTRIBUTING.md
+---
 
-## License
+## 🤝 Contributing
 
-MPL-2.0
+See [CONTRIBUTING.md](CONTRIBUTING.md)
+
+---
+
+## 📜 License
+
+This project is licensed under the **MPL-2.0 License**
