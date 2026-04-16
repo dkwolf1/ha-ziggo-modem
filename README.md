@@ -15,7 +15,7 @@
 
 ## 🔧 Ziggo Modem - Home Assistant Integration
 
-Local Home Assistant integration for Ziggo (Sagemcom) cable modems.
+Local Home Assistant integration for Ziggo cable modems (Sagemcom).
 
 This integration provides detailed insight into your DOCSIS connection, including signal quality, channel statistics, error rates and connectivity health — all locally, without cloud dependencies.
 
@@ -41,7 +41,7 @@ This integration provides detailed insight into your DOCSIS connection, includin
 1. Go to **HACS → Integrations**
 2. Click **⋮ → Custom repositories**
 3. Add this repository
-4. Select **Integration**
+4. Set category **Integration**
 5. Install **Ziggo Modem**
 6. Restart Home Assistant
 
@@ -49,9 +49,11 @@ This integration provides detailed insight into your DOCSIS connection, includin
 
 ### Manual
 
-1. Copy: custom_components/ziggo_modem into your Home Assistant config directory
+1. Copy:
+   custom_components/ziggo_modem
+   into your Home Assistant config directory
 
-2. Restart Home Assistant
+3. Restart Home Assistant
 
 ---
 
@@ -73,7 +75,6 @@ Enter:
 ### General
 - Modem Status
 - Uptime
-- Internet Toegang
 - Kabelkwaliteit
 
 ### Downstream
@@ -97,8 +98,9 @@ Enter:
 ## 🚨 Binary Sensors
 
 - Kabelprobleem
-- Internet Toegang Verloren
+- Internet Storing
 - Upstream Timeouts Aanwezig
+- Internet Toegang
 
 ---
 
@@ -107,7 +109,7 @@ Enter:
 - Uses undocumented Ziggo modem API
 - Works only locally (192.168.100.1)
 - OFDM metrics may vary per modem firmware
-- Designed for Sagemcom-based Ziggo modems
+- Primarily tested on Sagemcom-based Ziggo modems
 
 ---
 
