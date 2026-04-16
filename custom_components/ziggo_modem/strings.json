@@ -1,0 +1,37 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ziggo Modem",
+        "description": "Voer de gegevens van je Ziggo modem in.",
+        "data": {
+          "host": "IP-adres",
+          "username": "Gebruikersnaam",
+          "password": "Wachtwoord"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Ongeldige inloggegevens",
+      "cannot_connect": "Kan geen verbinding maken met modem",
+      "unknown": "Onbekende fout"
+    },
+    "abort": {
+      "already_configured": "Modem is al toegevoegd"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ziggo Modem Instellingen",
+        "description": "Pas de instellingen van de integratie aan.",
+        "data": {
+          "host": "IP-adres",
+          "username": "Gebruikersnaam",
+          "password": "Wachtwoord",
+          "scan_interval": "Polling interval (seconden)"
+        }
+      }
+    }
+  }
+}

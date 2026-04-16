@@ -40,7 +40,7 @@ This integration provides detailed insight into your DOCSIS connection, includin
 
 1. Go to **HACS → Integrations**
 2. Click **⋮ → Custom repositories**
-3. Add this repository  
+3. Add this repository
 4. Select **Integration**
 5. Install **Ziggo Modem**
 6. Restart Home Assistant
