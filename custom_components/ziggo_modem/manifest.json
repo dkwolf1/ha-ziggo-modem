@@ -1,12 +1,12 @@
 {
   "domain": "ziggo_modem",
   "name": "Ziggo Modem",
-  "version": "1.0.0",
-  "documentation": "https://github.com/dkwolf1/ha-ziggo-modem",
-  "issue_tracker": "https://github.com/dkwolf1/ha-ziggo-modem/issues",
+  "codeowners": ["@dkwolf1"],
   "config_flow": true,
-  "iot_class": "local_polling",
+  "documentation": "https://github.com/dkwolf1/ha-ziggo-modem",
   "integration_type": "hub",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/dkwolf1/ha-ziggo-modem/issues",
   "requirements": [],
-  "codeowners": ["@dkwolf1"]
+  "version": "1.0.0"
 }
