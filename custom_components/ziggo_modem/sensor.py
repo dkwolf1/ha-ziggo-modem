@@ -15,6 +15,7 @@ from .entity import ZiggoModemBaseEntity
 # Helpers
 # =========================
 
+
 def format_uptime(seconds):
     if seconds is None:
         return None
@@ -83,51 +84,122 @@ def first_serviceflow_rate(data, direction):
     return None
 
 
-def cable_quality(data):
-    ds = scqam_ds(get_ds_channels(data))
-    us = scqam_us(get_us_channels(data))
+def evaluate_cable_quality(data):
     ds_all = get_ds_channels(data)
+    us_all = get_us_channels(data)
 
-    ds_snr = minv(ds, "snr")
-    ds_power = avg(ds, "power")
-    us_power = avg(us, "power")
+    ds_scqam = scqam_ds(ds_all)
+    ds_ofdm = ofdm_ds(ds_all)
+    us_scqam = scqam_us(us_all)
+
+    ds_snr = minv(ds_scqam, "snr")
+    ds_power = avg(ds_scqam, "power")
+    us_power = avg(us_scqam, "power")
     ds_locked = locked(ds_all)
     ds_total = len(ds_all)
-    ofdm_uncorrected = sumv(ofdm_ds(ds_all), "uncorrectedErrors")
+    ofdm_uncorrected = sumv(ds_ofdm, "uncorrectedErrors")
+    scqam_uncorrected = sumv(ds_scqam, "uncorrectedErrors")
+    t3_timeouts = sumv(us_all, "t3Timeout")
+
+    score = 100
+    reasons = []
 
     if ds_total and ds_locked < ds_total:
-        return "Slecht"
+        score -= 35
+        reasons.append("Niet alle downstream kanalen zijn gelocked")
 
-    if ds_snr is not None and ds_snr < 34:
-        return "Slecht"
+    if ds_power is not None:
+        if ds_power < -10 or ds_power > 10:
+            score -= 25
+            reasons.append("Downstream power sterk afwijkend")
+        elif ds_power < -8 or ds_power > 8:
+            score -= 10
+            reasons.append("Downstream power licht afwijkend")
 
-    if ds_power is not None and (ds_power < -12 or ds_power > 12):
-        return "Slecht"
+    if ds_snr is not None:
+        if ds_snr < 34:
+            score -= 40
+            reasons.append("Downstream SNR te laag")
+        elif ds_snr < 37:
+            score -= 25
+            reasons.append("Downstream SNR verlaagd")
+        elif ds_snr < 40:
+            score -= 10
+            reasons.append("Downstream SNR iets lager dan ideaal")
 
-    if us_power is not None and us_power > 52:
-        return "Slecht"
+    if us_power is not None:
+        if us_power > 52:
+            score -= 35
+            reasons.append("Upstream power te hoog")
+        elif us_power > 50:
+            score -= 20
+            reasons.append("Upstream power verhoogd")
+        elif us_power > 48:
+            score -= 10
+            reasons.append("Upstream power licht verhoogd")
 
     if ofdm_uncorrected > 5000:
-        return "Slecht"
+        score -= 35
+        reasons.append("Veel OFDM uncorrected errors")
+    elif ofdm_uncorrected > 1000:
+        score -= 20
+        reasons.append("Verhoogde OFDM uncorrected errors")
+    elif ofdm_uncorrected > 10:
+        score -= 5
+        reasons.append("Lichte OFDM erroractiviteit")
 
-    if ds_snr is not None and ds_snr < 38:
-        return "Matig"
+    if t3_timeouts > 2:
+        score -= 20
+        reasons.append("Meerdere T3 timeouts")
+    elif t3_timeouts > 0:
+        score -= 10
+        reasons.append("T3 timeout(s) aanwezig")
 
-    if ds_power is not None and (ds_power < -8 or ds_power > 10):
-        return "Matig"
+    score = max(score, 0)
 
-    if us_power is not None and us_power > 50:
-        return "Matig"
+    if score >= 80:
+        status = "Goed"
+        advice = "Geen actie nodig"
+    elif score >= 50:
+        status = "Matig"
+        advice = "Controleer coaxverbindingen en houd fouttellers in de gaten"
+    else:
+        status = "Slecht"
+        advice = (
+            "Controleer splitter, coaxkabel en wandcontactdoos "
+            "of neem contact op met de provider"
+        )
 
-    if ofdm_uncorrected > 1000:
-        return "Matig"
+    reason = (
+        ", ".join(reasons)
+        if reasons
+        else "Signaalwaarden vallen binnen normale marges"
+    )
 
-    return "Goed"
+    return {
+        "status": status,
+        "score": score,
+        "reden": reason,
+        "advies": advice,
+        "downstream_power_avg": ds_power,
+        "downstream_snr_min": ds_snr,
+        "upstream_power_avg": us_power,
+        "downstream_locked": ds_locked,
+        "downstream_total": ds_total,
+        "ofdm_uncorrected_errors": ofdm_uncorrected,
+        "scqam_uncorrected_errors": scqam_uncorrected,
+        "t3_timeouts": t3_timeouts,
+    }
+
+
+def cable_quality(data):
+    return evaluate_cable_quality(data)["status"]
 
 
 # =========================
 # Sensor definitions
 # =========================
+
 
 @dataclass(frozen=True, kw_only=True)
 class ZiggoModemSensorDescription(SensorEntityDescription):
@@ -244,3 +316,27 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
             return self.entity_description.value_fn(self.coordinator.data)
         except Exception:
             return None
+
+    @property
+    def extra_state_attributes(self):
+        if self.entity_description.key != "quality":
+            return None
+
+        try:
+            quality = evaluate_cable_quality(self.coordinator.data)
+        except Exception:
+            return None
+
+        return {
+            "score": quality["score"],
+            "reden": quality["reden"],
+            "advies": quality["advies"],
+            "downstream_power_avg": quality["downstream_power_avg"],
+            "downstream_snr_min": quality["downstream_snr_min"],
+            "upstream_power_avg": quality["upstream_power_avg"],
+            "downstream_locked": quality["downstream_locked"],
+            "downstream_total": quality["downstream_total"],
+            "ofdm_uncorrected_errors": quality["ofdm_uncorrected_errors"],
+            "scqam_uncorrected_errors": quality["scqam_uncorrected_errors"],
+            "t3_timeouts": quality["t3_timeouts"],
+        }

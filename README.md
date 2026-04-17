@@ -13,120 +13,123 @@
 
 ---
 
-## 🔧 Ziggo Modem - Home Assistant Integration
+## 🔧 Ziggo Modem - Home Assistant Integratie
 
-Local Home Assistant integration for Ziggo cable modems (Sagemcom).
+Lokale Home Assistant integratie voor Ziggo kabelmodems (Sagemcom).
 
-This integration provides detailed insight into your DOCSIS connection, including signal quality, channel statistics, error rates and connectivity health — all locally, without cloud dependencies.
+Deze integratie geeft inzicht in je DOCSIS-verbinding, zoals signaalkwaliteit, kanaalstatistieken, fouttellingen en netwerkstatus — volledig lokaal en zonder cloud.
 
 ---
 
 ## ✨ Features
 
-- Modem status & uptime
-- Downstream signal analysis (power, SNR, errors)
-- Upstream signal monitoring (power, timeouts)
-- SC-QAM vs OFDM error separation
-- Speed profile detection (download / upload)
-- Cable quality classification (Goed / Matig / Slecht)
-- Binary sensors for connection issues
-- Fully local API (no cloud)
+- Modemstatus en uptime
+- Downstream signaalanalyse (power, SNR, fouten)
+- Upstream monitoring (power, timeouts)
+- SC-QAM en OFDM foutanalyse
+- Snelheidsprofiel detectie (download / upload)
+- Kabelkwaliteit classificatie (Goed / Matig / Slecht)
+- Kabelkwaliteit analyse met score, reden en advies
+- Binary sensors voor verbindingsproblemen
+- Volledig lokale API (geen cloud afhankelijkheid)
 
 ---
 
-## 📦 Installation
+## 📦 Installatie
 
-### HACS (Recommended)
+### HACS (aanbevolen)
 
-1. Go to **HACS → Integrations**
-2. Click **⋮ → Custom repositories**
-3. Add this repository
-4. Set category **Integration**
-5. Install **Ziggo Modem**
-6. Restart Home Assistant
-
----
-
-### Manual
-
-1. Copy:
-   custom_components/ziggo_modem
-   into your Home Assistant config directory
-
-3. Restart Home Assistant
+1. Ga naar **HACS → Integraties**
+2. Klik op **⋮ → Custom repositories**
+3. Voeg deze repository toe
+4. Kies categorie **Integration**
+5. Installeer **Ziggo Modem**
+6. Herstart Home Assistant
 
 ---
 
-## ⚙️ Configuration
+### Handmatig
 
-The integration is fully UI-based:
+1. Kopieer:
 
-**Settings → Devices & Services → Add Integration → Ziggo Modem**
+custom_components/ziggo_modem
 
-Enter:
-- IP address (default: `192.168.100.1`)
-- Username
-- Password
+naar je Home Assistant configuratiemap
+
+2. Herstart Home Assistant
 
 ---
 
-## 📊 Sensors
+## ⚙️ Configuratie
 
-### General
-- Modem Status
+De integratie werkt volledig via de UI:
+
+**Instellingen → Apparaten & Diensten → Integratie toevoegen → Ziggo Modem**
+
+Voer in:
+- IP-adres (standaard: `192.168.100.1`)
+- Gebruikersnaam
+- Wachtwoord
+
+---
+
+## 📊 Sensoren
+
+### Algemeen
+- Modemstatus
 - Uptime
 - Kabelkwaliteit
 
 ### Downstream
 - Downstream Power (dBmV)
 - Downstream SNR (dB)
-- Channel count
-- Locked channels
-- Errors (SC-QAM / OFDM)
+- Aantal kanalen
+- Gelockte kanalen
+- Fouten (SC-QAM / OFDM)
 
 ### Upstream
 - Upstream Power (dBmV)
-- Channel count
+- Aantal kanalen
 - T3 timeouts
 
-### Speed Profile
-- Download Profiel (Mbit/s)
-- Upload Profiel (Mbit/s)
+### Snelheidsprofiel
+- Downloadprofiel (Mbit/s)
+- Uploadprofiel (Mbit/s)
 
 ---
 
-## 🚨 Binary Sensors
+## 🚨 Binary sensors
 
 - Kabelprobleem
-- Internet Storing
-- Upstream Timeouts Aanwezig
-- Internet Toegang
+- Internet storing
+- Upstream timeouts aanwezig
+- Internettoegang
 
 ---
 
-## ⚠️ Notes
+## ⚠️ Opmerkingen
 
-- Uses undocumented Ziggo modem API
-- Works only locally (192.168.100.1)
-- OFDM metrics may vary per modem firmware
-- Primarily tested on Sagemcom-based Ziggo modems
+- Gebruikt een ongedocumenteerde Ziggo modem API
+- Werkt alleen lokaal (192.168.100.1)
+- OFDM-waarden kunnen verschillen per firmware
+- Primair getest op Sagemcom Ziggo modems
 
 ---
 
 ## ⚖️ Disclaimer
 
-This project is not affiliated with Ziggo.
+Dit project is niet gelieerd aan Ziggo.
 
-Use at your own risk. API endpoints may change with firmware updates.
-
----
-
-## 🤝 Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md)
+Gebruik op eigen risico. API endpoints kunnen wijzigen bij firmware-updates.
 
 ---
 
-## 📜 License
+## 🤝 Bijdragen
 
-This project is licensed under the **MPL-2.0 License**
+Zie [CONTRIBUTING.md](CONTRIBUTING.md)
+
+---
+
+## 📜 Licentie
+
+Dit project valt onder de **MPL-2.0 licentie**
