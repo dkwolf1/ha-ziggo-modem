@@ -28,8 +28,9 @@ Deze integratie geeft inzicht in je DOCSIS-verbinding, zoals signaalkwaliteit, k
 - Upstream monitoring (power, timeouts)
 - SC-QAM en OFDM foutanalyse
 - Snelheidsprofiel detectie (download / upload)
-- Kabelkwaliteit classificatie (Goed / Matig / Slecht)
-- Kabelkwaliteit analyse met score, reden en advies
+- Signaalkwaliteit classificatie (Goed / Matig / Slecht)
+- Signaalkwaliteit analyse met score, reden en advies
+- Duidelijke uitleg en praktisch advies voor probleemoplossing
 - Binary sensors voor verbindingsproblemen
 - Volledig lokale API (geen cloud afhankelijkheid)
 
@@ -52,9 +53,10 @@ Deze integratie geeft inzicht in je DOCSIS-verbinding, zoals signaalkwaliteit, k
 
 1. Kopieer:
 
-custom_components/ziggo_modem
 
 naar je Home Assistant configuratiemap
+
+custom_components/ziggo_modem
 
 2. Herstart Home Assistant
 
@@ -78,7 +80,9 @@ Voer in:
 ### Algemeen
 - Modemstatus
 - Uptime
-- Kabelkwaliteit
+- Signaalkwaliteit
+- Signaalkwaliteit Uitleg
+- Signaalkwaliteit Advies
 
 ### Downstream
 - Downstream Power (dBmV)
@@ -95,6 +99,15 @@ Voer in:
 ### Snelheidsprofiel
 - Downloadprofiel (Mbit/s)
 - Uploadprofiel (Mbit/s)
+
+---
+
+> ℹ️ **Let op**
+>
+> De signaalkwaliteit is een indicatie van DOCSIS signaalwaarden (zoals SNR, power en fouttellingen).
+> Dit betekent niet automatisch dat je internet traag of instabiel is.
+>
+> Gebruik deze informatie vooral bij storingen of uitval.
 
 ---
 
