@@ -97,9 +97,17 @@ def evaluate_signal_quality(data):
     us_power = avg(us_scqam, "power")
     ds_locked = locked(ds_all)
     ds_total = len(ds_all)
-    ofdm_uncorrected = sumv(ds_ofdm, "uncorrectedErrors")
-    scqam_uncorrected = sumv(ds_scqam, "uncorrectedErrors")
-    t3_timeouts = sumv(us_all, "t3Timeout")
+
+    uptime = data.get("state", {}).get("cablemodem", {}).get("upTime", 0)
+    hours = max(uptime / 3600, 1 / 60)  # minimaal 1 minuut om extreme deling te beperken
+
+    ofdm_uncorrected_total = sumv(ds_ofdm, "uncorrectedErrors")
+    scqam_uncorrected_total = sumv(ds_scqam, "uncorrectedErrors")
+    t3_timeouts_total = sumv(us_all, "t3Timeout")
+
+    ofdm_uncorrected_rate = round(ofdm_uncorrected_total / hours, 1)
+    scqam_uncorrected_rate = round(scqam_uncorrected_total / hours, 1)
+    t3_timeouts_rate = round(t3_timeouts_total / hours, 1)
 
     score = 100
     reasons = []
@@ -138,22 +146,32 @@ def evaluate_signal_quality(data):
             score -= 10
             reasons.append("Upstream power licht verhoogd")
 
-    if ofdm_uncorrected > 5000:
+    # OFDM fouten per uur
+    if ofdm_uncorrected_rate > 5000:
         score -= 35
-        reasons.append("Veel OFDM uncorrected errors")
-    elif ofdm_uncorrected > 1000:
+        reasons.append("Veel OFDM uncorrected errors per uur")
+    elif ofdm_uncorrected_rate > 1000:
         score -= 20
-        reasons.append("Verhoogde OFDM uncorrected errors")
-    elif ofdm_uncorrected > 10:
+        reasons.append("Verhoogde OFDM uncorrected errors per uur")
+    elif ofdm_uncorrected_rate > 100:
         score -= 5
-        reasons.append("Lichte OFDM erroractiviteit")
+        reasons.append("Lichte OFDM erroractiviteit per uur")
 
-    if t3_timeouts > 2:
+    # SC-QAM fouten per uur, lichter meewegen
+    if scqam_uncorrected_rate > 100:
+        score -= 15
+        reasons.append("Verhoogde SC-QAM uncorrected errors per uur")
+    elif scqam_uncorrected_rate > 10:
+        score -= 5
+        reasons.append("Lichte SC-QAM erroractiviteit per uur")
+
+    # T3 timeouts per uur
+    if t3_timeouts_rate > 10:
         score -= 20
-        reasons.append("Meerdere T3 timeouts")
-    elif t3_timeouts > 0:
+        reasons.append("Meerdere T3 timeouts per uur")
+    elif t3_timeouts_rate > 2:
         score -= 10
-        reasons.append("T3 timeout(s) aanwezig")
+        reasons.append("T3 timeout(s) per uur aanwezig")
 
     score = max(score, 0)
 
@@ -195,15 +213,20 @@ def evaluate_signal_quality(data):
             "Dit is een indicatie van DOCSIS signaalkwaliteit en niet van de "
             "totale internetervaring"
         ),
+        "uptime_hours": round(hours, 2),
         "downstream_power_avg": ds_power,
         "downstream_snr_min": ds_snr,
         "upstream_power_avg": us_power,
         "downstream_locked": ds_locked,
         "downstream_total": ds_total,
-        "ofdm_uncorrected_errors": ofdm_uncorrected,
-        "scqam_uncorrected_errors": scqam_uncorrected,
-        "t3_timeouts": t3_timeouts,
+        "ofdm_uncorrected_errors_total": ofdm_uncorrected_total,
+        "ofdm_uncorrected_errors_per_hour": ofdm_uncorrected_rate,
+        "scqam_uncorrected_errors_total": scqam_uncorrected_total,
+        "scqam_uncorrected_errors_per_hour": scqam_uncorrected_rate,
+        "t3_timeouts_total": t3_timeouts_total,
+        "t3_timeouts_per_hour": t3_timeouts_rate,
     }
+
 
 
 def signal_quality(data):
@@ -364,12 +387,16 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
             "reden": quality["reden"],
             "advies": quality["advies"],
             "opmerking": quality["opmerking"],
+            "uptime_hours": quality["uptime_hours"],
             "downstream_power_avg": quality["downstream_power_avg"],
             "downstream_snr_min": quality["downstream_snr_min"],
             "upstream_power_avg": quality["upstream_power_avg"],
             "downstream_locked": quality["downstream_locked"],
             "downstream_total": quality["downstream_total"],
-            "ofdm_uncorrected_errors": quality["ofdm_uncorrected_errors"],
-            "scqam_uncorrected_errors": quality["scqam_uncorrected_errors"],
-            "t3_timeouts": quality["t3_timeouts"],
+            "ofdm_uncorrected_errors_total": quality["ofdm_uncorrected_errors_total"],
+            "ofdm_uncorrected_errors_per_hour": quality["ofdm_uncorrected_errors_per_hour"],
+            "scqam_uncorrected_errors_total": quality["scqam_uncorrected_errors_total"],
+            "scqam_uncorrected_errors_per_hour": quality["scqam_uncorrected_errors_per_hour"],
+            "t3_timeouts_total": quality["t3_timeouts_total"],
+            "t3_timeouts_per_hour": quality["t3_timeouts_per_hour"],
         }
