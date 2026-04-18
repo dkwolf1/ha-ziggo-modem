@@ -54,26 +54,43 @@ def locked(lst):
 
 
 def has_cable_issue(data):
-    ds = scqam_ds(get_ds_channels(data))
-    us = scqam_us(get_us_channels(data))
+    """Return True only for more serious DOCSIS signal problems."""
     ds_all = get_ds_channels(data)
+    us_all = get_us_channels(data)
 
-    ds_snr = minv(ds, "snr")
-    ds_power = avg(ds, "power")
-    us_power = avg(us, "power")
+    ds_scqam = scqam_ds(ds_all)
+    ds_ofdm = ofdm_ds(ds_all)
+    us_scqam = scqam_us(us_all)
+
+    ds_snr = minv(ds_scqam, "snr")
+    ds_power = avg(ds_scqam, "power")
+    us_power = avg(us_scqam, "power")
     ds_locked = locked(ds_all)
     ds_total = len(ds_all)
-    ofdm_uncorrected = sumv(ofdm_ds(ds_all), "uncorrectedErrors")
+    ofdm_uncorrected = sumv(ds_ofdm, "uncorrectedErrors")
+    t3_timeouts = sumv(us_all, "t3Timeout")
+    t4_timeouts = sumv(us_all, "t4Timeout")
 
+    # Harde probleem-indicatoren
     if ds_total and ds_locked < ds_total:
         return True
-    if ds_snr is not None and ds_snr < 34:
+
+    if ds_snr is not None and ds_snr < 33:
         return True
+
     if ds_power is not None and (ds_power < -12 or ds_power > 12):
         return True
+
     if us_power is not None and us_power > 52:
         return True
+
     if ofdm_uncorrected > 5000:
+        return True
+
+    if t4_timeouts > 0:
+        return True
+
+    if t3_timeouts > 2:
         return True
 
     return False
@@ -87,7 +104,7 @@ class ZiggoModemBinarySensorDescription(BinarySensorEntityDescription):
 BINARY_SENSORS = (
     ZiggoModemBinarySensorDescription(
         key="internet_access",
-        name="Internet Toegang",
+        name="Internettoegang",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         value_fn=lambda d: d["state"]["cablemodem"]["accessAllowed"],
     ),

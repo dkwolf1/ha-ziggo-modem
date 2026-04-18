@@ -84,7 +84,7 @@ def first_serviceflow_rate(data, direction):
     return None
 
 
-def evaluate_cable_quality(data):
+def evaluate_signal_quality(data):
     ds_all = get_ds_channels(data)
     us_all = get_us_channels(data)
 
@@ -160,14 +160,23 @@ def evaluate_cable_quality(data):
     if score >= 80:
         status = "Goed"
         advice = "Geen actie nodig"
+        explanation = "DOCSIS signaalwaarden vallen binnen normale marges."
     elif score >= 50:
         status = "Matig"
         advice = "Controleer coaxverbindingen en houd fouttellers in de gaten"
+        explanation = (
+            "Er zijn afwijkingen zichtbaar in de DOCSIS signaalwaarden, "
+            "maar de verbinding kan nog stabiel functioneren."
+        )
     else:
         status = "Slecht"
         advice = (
             "Controleer splitter, coaxkabel en wandcontactdoos "
             "of neem contact op met de provider"
+        )
+        explanation = (
+            "Er zijn duidelijke afwijkingen zichtbaar die relevant kunnen zijn "
+            "bij storingen, uitval of instabiliteit."
         )
 
     reason = (
@@ -181,6 +190,11 @@ def evaluate_cable_quality(data):
         "score": score,
         "reden": reason,
         "advies": advice,
+        "uitleg": explanation,
+        "opmerking": (
+            "Dit is een indicatie van DOCSIS signaalkwaliteit en niet van de "
+            "totale internetervaring"
+        ),
         "downstream_power_avg": ds_power,
         "downstream_snr_min": ds_snr,
         "upstream_power_avg": us_power,
@@ -192,8 +206,16 @@ def evaluate_cable_quality(data):
     }
 
 
-def cable_quality(data):
-    return evaluate_cable_quality(data)["status"]
+def signal_quality(data):
+    return evaluate_signal_quality(data)["status"]
+
+
+def signal_quality_explanation(data):
+    return evaluate_signal_quality(data)["uitleg"]
+
+
+def signal_quality_advice(data):
+    return evaluate_signal_quality(data)["advies"]
 
 
 # =========================
@@ -218,9 +240,19 @@ SENSORS = (
         value_fn=lambda d: format_uptime(d["state"]["cablemodem"]["upTime"]),
     ),
     ZiggoModemSensorDescription(
-        key="quality",
-        name="Kabelkwaliteit",
-        value_fn=lambda d: cable_quality(d),
+        key="signal_quality",
+        name="Signaalkwaliteit",
+        value_fn=lambda d: signal_quality(d),
+    ),
+    ZiggoModemSensorDescription(
+        key="signal_quality_explanation",
+        name="Signaalkwaliteit Uitleg",
+        value_fn=lambda d: signal_quality_explanation(d),
+    ),
+    ZiggoModemSensorDescription(
+        key="signal_quality_advice",
+        name="Signaalkwaliteit Advies",
+        value_fn=lambda d: signal_quality_advice(d),
     ),
     ZiggoModemSensorDescription(
         key="software",
@@ -319,11 +351,11 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self):
-        if self.entity_description.key != "quality":
+        if self.entity_description.key != "signal_quality":
             return None
 
         try:
-            quality = evaluate_cable_quality(self.coordinator.data)
+            quality = evaluate_signal_quality(self.coordinator.data)
         except Exception:
             return None
 
@@ -331,6 +363,7 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
             "score": quality["score"],
             "reden": quality["reden"],
             "advies": quality["advies"],
+            "opmerking": quality["opmerking"],
             "downstream_power_avg": quality["downstream_power_avg"],
             "downstream_snr_min": quality["downstream_snr_min"],
             "upstream_power_avg": quality["upstream_power_avg"],
