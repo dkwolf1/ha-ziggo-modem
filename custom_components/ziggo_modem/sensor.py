@@ -19,18 +19,20 @@ from .entity import ZiggoModemBaseEntity
 def format_uptime(seconds):
     if seconds is None:
         return None
-    s = int(seconds)
-    d, s = divmod(s, 86400)
-    h, s = divmod(s, 3600)
-    m, s = divmod(s, 60)
+
+    total_minutes = int(seconds) // 60
+
+    days = total_minutes // (24 * 60)
+    hours = (total_minutes % (24 * 60)) // 60
+    minutes = total_minutes % 60
+
     parts = []
-    if d:
-        parts.append(f"{d}d")
-    if h or d:
-        parts.append(f"{h}u")
-    if m or h or d:
-        parts.append(f"{m}m")
-    parts.append(f"{s}s")
+    if days:
+        parts.append(f"{days}d")
+    if hours or days:
+        parts.append(f"{hours}u")
+    parts.append(f"{minutes}m")
+
     return " ".join(parts)
 
 
@@ -260,7 +262,9 @@ SENSORS = (
     ZiggoModemSensorDescription(
         key="uptime",
         name="Uptime",
-        value_fn=lambda d: format_uptime(d["state"]["cablemodem"]["upTime"]),
+        value_fn=lambda d: format_uptime(
+            d.get("state", {}).get("cablemodem", {}).get("upTime")
+        ),
     ),
     ZiggoModemSensorDescription(
         key="signal_quality",
