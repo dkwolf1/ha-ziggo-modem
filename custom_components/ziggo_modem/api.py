@@ -32,7 +32,7 @@ class ZiggoModemApi:
     async def async_initialize(self) -> None:
         """Create HTTP session."""
         if self._session is None or self._session.closed:
-            timeout = aiohttp.ClientTimeout(total=15)
+            timeout = aiohttp.ClientTimeout(total=20)
             connector = aiohttp.TCPConnector(ssl=False)
 
             self._session = aiohttp.ClientSession(
@@ -227,11 +227,34 @@ class ZiggoModemApi:
 
     async def async_get_data(self) -> dict[str, Any]:
         """Collect all modem data."""
-        return {
-            "state": await self.async_get_state(),
-            "downstream": await self.async_get_downstream(),
-            "primary_downstream": await self.async_get_primary_downstream(),
-            "upstream": await self.async_get_upstream(),
-            "serviceflows": await self.async_get_serviceflows(),
-            "softwareupdate": await self.async_get_softwareupdate(),
-        }
+
+        tasks = [
+            self.async_get_state(),
+            self.async_get_downstream(),
+            self.async_get_primary_downstream(),
+            self.async_get_upstream(),
+            self.async_get_serviceflows(),
+            self.async_get_softwareupdate(),
+        ]
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        keys = [
+            "state",
+            "downstream",
+            "primary_downstream",
+            "upstream",
+            "serviceflows",
+            "softwareupdate",
+        ]
+
+        data: dict[str, Any] = {}
+
+        for key, result in zip(keys, results):
+            if isinstance(result, Exception):
+                _LOGGER.debug("Endpoint %s failed: %s", key, result)
+                data[key] = {}
+            else:
+                data[key] = result
+
+        return data
