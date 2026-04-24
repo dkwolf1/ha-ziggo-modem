@@ -17,7 +17,7 @@
 
 Lokale Home Assistant integratie voor Ziggo kabelmodems (Sagemcom).
 
-Deze integratie geeft inzicht in je DOCSIS-verbinding, zoals signaalkwaliteit, kanaalstatistieken, fouttellingen en netwerkstatus — volledig lokaal en zonder cloud.
+Deze integratie geeft diepgaand inzicht in je DOCSIS-verbinding, zoals signaalkwaliteit, stabiliteit, fouttellingen en netwerkstatus — volledig lokaal en zonder cloud.
 
 ---
 
@@ -28,10 +28,26 @@ Deze integratie geeft inzicht in je DOCSIS-verbinding, zoals signaalkwaliteit, k
 - Upstream monitoring (power, timeouts)
 - SC-QAM en OFDM foutanalyse
 - Snelheidsprofiel detectie (download / upload)
-- Signaalkwaliteit classificatie (Goed / Matig / Slecht)
-- Signaalkwaliteit analyse met score, reden en advies
-- Duidelijke uitleg en praktisch advies voor probleemoplossing
-- Binary sensors voor verbindingsproblemen
+
+### 📊 Geavanceerde diagnostiek
+
+- **Signaalkwaliteit**
+  - Goed / Matig / Slecht
+  - Inclusief score, reden, uitleg en advies
+
+- **Lijnstabiliteit**
+  - Stabiel / Licht wisselend / Instabiel
+  - Gebaseerd op gedrag over tijd (errors + timeouts)
+
+- **Kabelprobleem detectie**
+  - Alleen bij echte DOCSIS-problemen
+  - Geen false positives na reboot
+  - Gebaseerd op rate (per uur) i.p.v. absolute waarden
+
+- **API Status**
+  - OK / Tijdelijke fouten / Instabiel / Gepauzeerd
+  - Geeft inzicht in integratie en modem communicatie
+
 - Volledig lokale API (geen cloud afhankelijkheid)
 
 ---
@@ -51,12 +67,7 @@ Deze integratie geeft inzicht in je DOCSIS-verbinding, zoals signaalkwaliteit, k
 
 ### Handmatig
 
-1. Kopieer:
-
-
-naar je Home Assistant configuratiemap
-
-custom_components/ziggo_modem
+1. Kopieer: custom_components/ziggo_modem naar je Home Assistant configuratiemap
 
 2. Herstart Home Assistant
 
@@ -81,8 +92,10 @@ Voer in:
 - Modemstatus
 - Uptime
 - Signaalkwaliteit
-- Signaalkwaliteit Uitleg
-- Signaalkwaliteit Advies
+- Signaalkwaliteit uitleg
+- Signaalkwaliteit advies
+- Lijnstabiliteit
+- API status
 
 ### Downstream
 - Downstream Power (dBmV)
@@ -102,21 +115,31 @@ Voer in:
 
 ---
 
-> ℹ️ **Let op**
->
-> De signaalkwaliteit is een indicatie van DOCSIS signaalwaarden (zoals SNR, power en fouttellingen).
-> Dit betekent niet automatisch dat je internet traag of instabiel is.
->
-> Gebruik deze informatie vooral bij storingen of uitval.
-
----
-
 ## 🚨 Binary sensors
 
 - Kabelprobleem
 - Internet storing
 - Upstream timeouts aanwezig
 - Internettoegang
+
+---
+
+## ℹ️ Uitleg sensoren
+
+- **Internettoegang**
+  → geeft aan of het modem verbinding heeft met het netwerk
+
+- **Signaalkwaliteit**
+  → technische beoordeling van DOCSIS waarden (SNR, power, errors)
+
+- **Lijnstabiliteit**
+  → geeft aan hoe stabiel de verbinding zich gedraagt over tijd
+
+- **Kabelprobleem**
+  → alleen actief bij duidelijke technische problemen (niet bij kleine afwijkingen)
+
+- **API status**
+  → status van de integratie en communicatie met het modem
 
 ---
 
