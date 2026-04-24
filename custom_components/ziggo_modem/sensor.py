@@ -100,7 +100,7 @@ def evaluate_signal_quality(data):
     ds_locked = locked(ds_all)
     ds_total = len(ds_all)
 
-    uptime = data.get("state", {}).get("cablemodem", {}).get("upTime", 0)
+    uptime = data.get("state", {}).get("cablemodem", {}).get("upTime", 0) or 0
     hours = max(uptime / 3600, 1 / 60)  # minimaal 1 minuut om extreme deling te beperken
 
     ofdm_uncorrected_total = sumv(ds_ofdm, "uncorrectedErrors")
@@ -229,7 +229,20 @@ def evaluate_signal_quality(data):
         "t3_timeouts_per_hour": t3_timeouts_rate,
     }
 
+def evaluate_line_stability(data):
+    quality = evaluate_signal_quality(data)
 
+    score = quality["score"]
+    t3_rate = quality["t3_timeouts_per_hour"]
+    ofdm_rate = quality["ofdm_uncorrected_errors_per_hour"]
+
+    if score >= 80 and t3_rate == 0 and ofdm_rate < 100:
+        return "Stabiel"
+
+    if score >= 50:
+        return "Licht wisselend"
+
+    return "Instabiel"
 
 def signal_quality(data):
     return evaluate_signal_quality(data)["status"]
@@ -350,6 +363,17 @@ SENSORS = (
         native_unit_of_measurement="Mbit/s",
         value_fn=lambda d: mbit(first_serviceflow_rate(d, "upstream")),
     ),
+    ZiggoModemSensorDescription(
+        key="api_status",
+        name="API Status",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: None,  # komt uit coordinator
+    ),
+    ZiggoModemSensorDescription(
+        key="line_stability",
+        name="Lijnstabiliteit",
+        value_fn=lambda d: evaluate_line_stability(d),
+    ),
 )
 
 
@@ -372,12 +396,25 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
     @property
     def native_value(self):
         try:
+            if self.entity_description.key == "api_status":
+                return self.coordinator.api_status
+
             return self.entity_description.value_fn(self.coordinator.data)
         except Exception:
             return None
 
     @property
     def extra_state_attributes(self):
+        # 👉 API STATUS attributes
+        if self.entity_description.key == "api_status":
+            return {
+                "consecutive_failures": self.coordinator.consecutive_failures,
+                "max_failures": self.coordinator.max_failures,
+                "update_interval_seconds": self.coordinator.update_interval_seconds,
+                "paused": self.coordinator.is_paused,
+            }
+
+        # 👉 Alleen voor signaalkwaliteit uitgebreide data
         if self.entity_description.key != "signal_quality":
             return None
 

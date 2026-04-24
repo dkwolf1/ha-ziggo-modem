@@ -54,7 +54,8 @@ def locked(lst):
 
 
 def has_cable_issue(data):
-    """Return True only for more serious DOCSIS signal problems."""
+    """Return True only for real DOCSIS signal problems (not minor fluctuations)."""
+
     ds_all = get_ds_channels(data)
     us_all = get_us_channels(data)
 
@@ -67,31 +68,57 @@ def has_cable_issue(data):
     us_power = avg(us_scqam, "power")
     ds_locked = locked(ds_all)
     ds_total = len(ds_all)
-    ofdm_uncorrected = sumv(ds_ofdm, "uncorrectedErrors")
-    t3_timeouts = sumv(us_all, "t3Timeout")
-    t4_timeouts = sumv(us_all, "t4Timeout")
 
-    # Harde probleem-indicatoren
+    # 👉 uptime meenemen → alles naar per uur
+    uptime = data.get("state", {}).get("cablemodem", {}).get("upTime", 0)
+    hours = max(uptime / 3600, 1 / 60)
+
+    ofdm_uncorrected_total = sumv(ds_ofdm, "uncorrectedErrors")
+    t3_timeouts_total = sumv(us_all, "t3Timeout")
+    t4_timeouts_total = sumv(us_all, "t4Timeout") if us_all else 0
+
+    ofdm_rate = ofdm_uncorrected_total / hours
+    t3_rate = t3_timeouts_total / hours
+
+    # =========================
+    # Harde problemen
+    # =========================
+
+    # Kanalen niet gelocked → altijd fout
     if ds_total and ds_locked < ds_total:
         return True
 
+    # Slechte SNR → echt probleem
     if ds_snr is not None and ds_snr < 33:
         return True
 
+    # Extreme power afwijking
     if ds_power is not None and (ds_power < -12 or ds_power > 12):
         return True
 
+    # Upstream te hoog → modem moet schreeuwen
     if us_power is not None and us_power > 52:
         return True
 
-    if ofdm_uncorrected > 5000:
+    # T4 timeouts → altijd fout
+    if t4_timeouts_total > 0:
         return True
 
-    if t4_timeouts > 0:
+    # =========================
+    # Zwaardere instabiliteit (rate-based)
+    # =========================
+
+    # Veel OFDM errors per uur → probleem
+    if ofdm_rate > 5000:
         return True
 
-    if t3_timeouts > 2:
+    # Structurele T3 timeouts → probleem
+    if t3_rate > 10:
         return True
+
+    # =========================
+    # Alles daaronder = geen probleem
+    # =========================
 
     return False
 
@@ -127,8 +154,8 @@ BINARY_SENSORS = (
         name="Upstream Timeouts Aanwezig",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: sumv(get_us_channels(d), "t3Timeout") > 0
-        or sumv(get_us_channels(d), "t4Timeout") > 0,
+        value_fn=lambda d: sumv(get_us_channels(d), "t4Timeout") > 0
+        or sumv(get_us_channels(d), "t3Timeout") > 5
     ),
 )
 
