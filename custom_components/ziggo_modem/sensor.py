@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import time
 from typing import Any, Callable
 
-from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
+from homeassistant.components.sensor import (
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
 from homeassistant.const import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -101,15 +106,15 @@ def evaluate_signal_quality(data):
     ds_total = len(ds_all)
 
     uptime = data.get("state", {}).get("cablemodem", {}).get("upTime", 0) or 0
-    hours = max(uptime / 3600, 1 / 60)  # minimaal 1 minuut om extreme deling te beperken
+    hours = max(uptime / 3600, 1 / 60)
 
     ofdm_uncorrected_total = sumv(ds_ofdm, "uncorrectedErrors")
     scqam_uncorrected_total = sumv(ds_scqam, "uncorrectedErrors")
     t3_timeouts_total = sumv(us_all, "t3Timeout")
 
-    ofdm_uncorrected_rate = round(ofdm_uncorrected_total / hours, 1)
-    scqam_uncorrected_rate = round(scqam_uncorrected_total / hours, 1)
-    t3_timeouts_rate = round(t3_timeouts_total / hours, 1)
+    ofdm_uncorrected_rate = round(ofdm_uncorrected_total / hours)
+    scqam_uncorrected_rate = round(scqam_uncorrected_total / hours)
+    t3_timeouts_rate = round(t3_timeouts_total / hours)
 
     score = 100
     reasons = []
@@ -148,7 +153,6 @@ def evaluate_signal_quality(data):
             score -= 10
             reasons.append("Upstream power licht verhoogd")
 
-    # OFDM fouten per uur
     if ofdm_uncorrected_rate > 5000:
         score -= 35
         reasons.append("Veel OFDM uncorrected errors per uur")
@@ -159,7 +163,6 @@ def evaluate_signal_quality(data):
         score -= 5
         reasons.append("Lichte OFDM erroractiviteit per uur")
 
-    # SC-QAM fouten per uur, lichter meewegen
     if scqam_uncorrected_rate > 100:
         score -= 15
         reasons.append("Verhoogde SC-QAM uncorrected errors per uur")
@@ -167,7 +170,6 @@ def evaluate_signal_quality(data):
         score -= 5
         reasons.append("Lichte SC-QAM erroractiviteit per uur")
 
-    # T3 timeouts per uur
     if t3_timeouts_rate > 10:
         score -= 20
         reasons.append("Meerdere T3 timeouts per uur")
@@ -229,6 +231,7 @@ def evaluate_signal_quality(data):
         "t3_timeouts_per_hour": t3_timeouts_rate,
     }
 
+
 def evaluate_line_stability(data):
     quality = evaluate_signal_quality(data)
 
@@ -244,6 +247,7 @@ def evaluate_line_stability(data):
 
     return "Instabiel"
 
+
 def signal_quality(data):
     return evaluate_signal_quality(data)["status"]
 
@@ -254,6 +258,13 @@ def signal_quality_explanation(data):
 
 def signal_quality_advice(data):
     return evaluate_signal_quality(data)["advies"]
+
+
+DELTA_RATE_SENSOR_KEYS = {
+    "ofdm_errors_delta_rate",
+    "scqam_errors_delta_rate",
+    "t3_timeouts_delta_rate",
+}
 
 
 # =========================
@@ -335,6 +346,64 @@ SENSORS = (
         value_fn=lambda d: sumv(ofdm_ds(get_ds_channels(d)), "uncorrectedErrors"),
     ),
     ZiggoModemSensorDescription(
+        key="ofdm_errors_rate",
+        name="OFDM Errors per uur",
+        native_unit_of_measurement="errors/h",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=lambda d: evaluate_signal_quality(d)[
+            "ofdm_uncorrected_errors_per_hour"
+        ],
+    ),
+    ZiggoModemSensorDescription(
+        key="scqam_errors_rate",
+        name="SC-QAM Errors per uur",
+        native_unit_of_measurement="errors/h",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=lambda d: evaluate_signal_quality(d)[
+            "scqam_uncorrected_errors_per_hour"
+        ],
+    ),
+    ZiggoModemSensorDescription(
+        key="t3_timeouts_rate",
+        name="T3 Timeouts per uur",
+        native_unit_of_measurement="timeouts/h",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=lambda d: evaluate_signal_quality(d)["t3_timeouts_per_hour"],
+    ),
+    ZiggoModemSensorDescription(
+        key="ofdm_errors_delta_rate",
+        name="OFDM Errors actueel per uur",
+        native_unit_of_measurement="errors/h",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=lambda d: sumv(ofdm_ds(get_ds_channels(d)), "uncorrectedErrors"),
+    ),
+    ZiggoModemSensorDescription(
+        key="scqam_errors_delta_rate",
+        name="SC-QAM Errors actueel per uur",
+        native_unit_of_measurement="errors/h",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=lambda d: sumv(scqam_ds(get_ds_channels(d)), "uncorrectedErrors"),
+    ),
+    ZiggoModemSensorDescription(
+        key="t3_timeouts_delta_rate",
+        name="T3 Timeouts actueel per uur",
+        native_unit_of_measurement="timeouts/h",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=lambda d: sumv(get_us_channels(d), "t3Timeout"),
+    ),
+    ZiggoModemSensorDescription(
         key="us_channels",
         name="Upstream Kanalen",
         value_fn=lambda d: len(get_us_channels(d)),
@@ -367,7 +436,7 @@ SENSORS = (
         key="api_status",
         name="API Status",
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: None,  # komt uit coordinator
+        value_fn=lambda d: None,
     ),
     ZiggoModemSensorDescription(
         key="line_stability",
@@ -392,6 +461,10 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
         super().__init__(coordinator, entry_id, host)
         self.entity_description = description
         self._attr_unique_id = f"{entry_id}_{description.key}"
+        self._last_delta_total = None
+        self._last_delta_time = None
+        self._last_data_id = None
+        self._cached_native_value = None
 
     @property
     def native_value(self):
@@ -399,13 +472,55 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
             if self.entity_description.key == "api_status":
                 return self.coordinator.api_status
 
-            return self.entity_description.value_fn(self.coordinator.data)
+            value = self.entity_description.value_fn(self.coordinator.data)
+
+            if self.entity_description.key in DELTA_RATE_SENSOR_KEYS:
+                return self._calculate_delta_rate(value)
+
+            return value
         except Exception:
             return None
 
+    def _calculate_delta_rate(self, current_total):
+        data_id = id(self.coordinator.data)
+
+        if self._last_data_id == data_id:
+            return self._cached_native_value
+
+        self._last_data_id = data_id
+        now = time.monotonic()
+
+        if current_total is None:
+            self._cached_native_value = None
+            return None
+
+        if self._last_delta_total is None or self._last_delta_time is None:
+            self._last_delta_total = current_total
+            self._last_delta_time = now
+            self._cached_native_value = 0
+            return 0
+
+        elapsed_seconds = now - self._last_delta_time
+        delta = current_total - self._last_delta_total
+
+        if delta < 0:
+            self._last_delta_total = current_total
+            self._last_delta_time = now
+            self._cached_native_value = 0
+            return 0
+
+        self._last_delta_total = current_total
+        self._last_delta_time = now
+
+        if elapsed_seconds <= 0:
+            return self._cached_native_value or 0
+
+        rate_per_hour = round(delta / (elapsed_seconds / 3600))
+        self._cached_native_value = rate_per_hour
+        return rate_per_hour
+
     @property
     def extra_state_attributes(self):
-        # 👉 API STATUS attributes
         if self.entity_description.key == "api_status":
             return {
                 "consecutive_failures": self.coordinator.consecutive_failures,
@@ -414,7 +529,6 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
                 "paused": self.coordinator.is_paused,
             }
 
-        # 👉 Alleen voor signaalkwaliteit uitgebreide data
         if self.entity_description.key != "signal_quality":
             return None
 
@@ -435,9 +549,13 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
             "downstream_locked": quality["downstream_locked"],
             "downstream_total": quality["downstream_total"],
             "ofdm_uncorrected_errors_total": quality["ofdm_uncorrected_errors_total"],
-            "ofdm_uncorrected_errors_per_hour": quality["ofdm_uncorrected_errors_per_hour"],
+            "ofdm_uncorrected_errors_per_hour": quality[
+                "ofdm_uncorrected_errors_per_hour"
+            ],
             "scqam_uncorrected_errors_total": quality["scqam_uncorrected_errors_total"],
-            "scqam_uncorrected_errors_per_hour": quality["scqam_uncorrected_errors_per_hour"],
+            "scqam_uncorrected_errors_per_hour": quality[
+                "scqam_uncorrected_errors_per_hour"
+            ],
             "t3_timeouts_total": quality["t3_timeouts_total"],
             "t3_timeouts_per_hour": quality["t3_timeouts_per_hour"],
         }
