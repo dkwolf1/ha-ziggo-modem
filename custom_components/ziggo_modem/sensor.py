@@ -248,6 +248,49 @@ def evaluate_line_stability(data):
     return "Instabiel"
 
 
+def classify_connection_issue(data):
+    quality = evaluate_signal_quality(data)
+
+    ds_snr = quality["downstream_snr_min"]
+    ds_power = quality["downstream_power_avg"]
+    us_power = quality["upstream_power_avg"]
+    ds_locked = quality["downstream_locked"]
+    ds_total = quality["downstream_total"]
+    ofdm_rate = quality["ofdm_uncorrected_errors_per_hour"]
+    scqam_rate = quality["scqam_uncorrected_errors_per_hour"]
+    t3_rate = quality["t3_timeouts_per_hour"]
+
+    access_allowed = data.get("state", {}).get(
+        "cablemodem", {}
+    ).get("accessAllowed")
+
+    if access_allowed in [False, "false", "denied", 0]:
+        return "Mogelijke provider-/CMTS-storing"
+
+    if ds_total and ds_locked < ds_total:
+        return "Mogelijk kanaalprobleem"
+
+    if us_power is not None and us_power > 52:
+        return "Mogelijk coaxprobleem"
+
+    if t3_rate > 10:
+        return "Mogelijk coaxprobleem"
+
+    if ds_snr is not None and ds_snr < 34:
+        return "Mogelijke instraling / ruis"
+
+    if ofdm_rate > 5000:
+        return "Mogelijke instraling / ruis"
+
+    if ds_power is not None and (ds_power < -10 or ds_power > 10):
+        return "Mogelijk coaxprobleem"
+
+    if scqam_rate > 100:
+        return "Mogelijk coaxprobleem"
+
+    return "Geen duidelijke storing"
+
+
 def signal_quality(data):
     return evaluate_signal_quality(data)["status"]
 
@@ -442,6 +485,12 @@ SENSORS = (
         key="line_stability",
         name="Lijnstabiliteit",
         value_fn=lambda d: evaluate_line_stability(d),
+    ),
+    ZiggoModemSensorDescription(
+        key="issue_classification",
+        name="Storingsclassificatie",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: classify_connection_issue(d),
     ),
 )
 
