@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api import ZiggoModemApi
-from .const import CONF_HOST, DOMAIN
+from .const import CONF_HOST, CONF_VERBOSE_DIAGNOSTICS, DOMAIN
 from .coordinator import ZiggoModemDataUpdateCoordinator
 from .entity import ZiggoModemBaseEntity
 
@@ -31,6 +31,12 @@ async def async_setup_entry(
                 entry.entry_id,
                 host,
                 api,
+            ),
+            ZiggoModemVerboseDiagnosticsSwitch(
+                hass,
+                coordinator,
+                entry,
+                host,
             ),
         ]
     )
@@ -71,3 +77,51 @@ class ZiggoModemPauseSwitch(ZiggoModemBaseEntity, SwitchEntity):
         self.hass.data[DOMAIN][self._entry_id]["paused"] = False
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
+
+
+class ZiggoModemVerboseDiagnosticsSwitch(ZiggoModemBaseEntity, SwitchEntity):
+    """Switch to show additional diagnostic attributes."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        coordinator: ZiggoModemDataUpdateCoordinator,
+        entry: ConfigEntry,
+        host: str,
+    ) -> None:
+        super().__init__(coordinator, entry.entry_id, host)
+        self.hass = hass
+        self._entry = entry
+        self._attr_name = "Uitgebreide diagnostiek"
+        self._attr_unique_id = f"{entry.entry_id}_verbose_diagnostics"
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        self._attr_icon = "mdi:text-box-search"
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if verbose diagnostics are enabled."""
+        return self.coordinator.verbose_diagnostics
+
+    async def async_turn_on(self, **kwargs) -> None:
+        """Enable verbose diagnostics."""
+        await self._set_verbose_diagnostics(True)
+
+    async def async_turn_off(self, **kwargs) -> None:
+        """Disable verbose diagnostics."""
+        await self._set_verbose_diagnostics(False)
+
+    async def _set_verbose_diagnostics(self, enabled: bool) -> None:
+        self.hass.data[DOMAIN][self._entry.entry_id][
+            "verbose_diagnostics"
+        ] = enabled
+
+        self.hass.config_entries.async_update_entry(
+            self._entry,
+            options={
+                **self._entry.options,
+                CONF_VERBOSE_DIAGNOSTICS: enabled,
+            },
+        )
+
+        self.async_write_ha_state()
+        self.coordinator.async_update_listeners()

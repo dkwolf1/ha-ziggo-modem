@@ -12,8 +12,10 @@ from .const import (
     CONF_PASSWORD,
     CONF_SCAN_INTERVAL,
     CONF_USERNAME,
+    CONF_VERBOSE_DIAGNOSTICS,
     DEFAULT_HOST,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_VERBOSE_DIAGNOSTICS,
     DOMAIN,
 )
 
@@ -54,6 +56,7 @@ class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data=user_input,
                     options={
                         CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
+                        CONF_VERBOSE_DIAGNOSTICS: DEFAULT_VERBOSE_DIAGNOSTICS,
                     },
                 )
 
@@ -97,6 +100,10 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlow):
             CONF_SCAN_INTERVAL,
             DEFAULT_SCAN_INTERVAL,
         )
+        current_verbose_diagnostics = self.config_entry.options.get(
+            CONF_VERBOSE_DIAGNOSTICS,
+            DEFAULT_VERBOSE_DIAGNOSTICS,
+        )
 
         if user_input is not None:
             host = user_input[CONF_HOST]
@@ -125,6 +132,9 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlow):
                         CONF_USERNAME: username,
                         CONF_PASSWORD: password,
                         CONF_SCAN_INTERVAL: user_input[CONF_SCAN_INTERVAL],
+                        CONF_VERBOSE_DIAGNOSTICS: user_input[
+                            CONF_VERBOSE_DIAGNOSTICS
+                        ],
                     },
                 )
 
@@ -139,6 +149,10 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlow):
                         CONF_SCAN_INTERVAL,
                         default=current_scan_interval,
                     ): vol.All(vol.Coerce(int), vol.Range(min=5, max=3600)),
+                    vol.Required(
+                        CONF_VERBOSE_DIAGNOSTICS,
+                        default=current_verbose_diagnostics,
+                    ): bool,
                 }
             ),
             errors=errors,

@@ -28,6 +28,17 @@ class ZiggoModemApi:
         self._session: aiohttp.ClientSession | None = None
         self._token: str | None = None
         self._token_lock = asyncio.Lock()
+        self._last_endpoint_status: dict[str, str] = {}
+
+    @property
+    def host(self) -> str:
+        """Return the modem host."""
+        return self._host
+
+    @property
+    def last_endpoint_status(self) -> dict[str, str]:
+        """Return the status of the last endpoint fetch."""
+        return self._last_endpoint_status
 
     async def async_initialize(self) -> None:
         """Create HTTP session."""
@@ -249,12 +260,16 @@ class ZiggoModemApi:
         ]
 
         data: dict[str, Any] = {}
+        endpoint_status: dict[str, str] = {}
 
         for key, result in zip(keys, results):
             if isinstance(result, Exception):
                 _LOGGER.debug("Endpoint %s failed: %s", key, result)
                 data[key] = {}
+                endpoint_status[key] = "failed"
             else:
                 data[key] = result
+                endpoint_status[key] = "ok"
 
+        self._last_endpoint_status = endpoint_status
         return data
