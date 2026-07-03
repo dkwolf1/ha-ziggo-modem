@@ -29,7 +29,8 @@
           "host": "IP-adres",
           "username": "Gebruikersnaam",
           "password": "Wachtwoord",
-          "scan_interval": "Polling interval (seconden)"
+          "scan_interval": "Polling interval (seconden)",
+          "verbose_diagnostics": "Uitgebreide diagnostiek"
         }
       }
     }

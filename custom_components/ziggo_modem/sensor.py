@@ -5,6 +5,7 @@ import time
 from typing import Any, Callable
 
 from homeassistant.components.sensor import (
+    SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
     SensorStateClass,
@@ -77,6 +78,56 @@ def sumv(lst, key):
 
 def locked(lst):
     return sum(1 for c in lst if c.get("lockStatus"))
+
+
+def summarize_channel(channel):
+    """Return a compact diagnostic summary for a DOCSIS channel."""
+    return {
+        "id": channel.get("channelId") or channel.get("id"),
+        "type": channel.get("channelType"),
+        "locked": channel.get("lockStatus"),
+        "frequency": channel.get("frequency"),
+        "power": channel.get("power"),
+        "snr": channel.get("snr"),
+        "modulation": channel.get("modulation"),
+        "corrected_errors": channel.get("correctedErrors"),
+        "uncorrected_errors": channel.get("uncorrectedErrors"),
+        "t3_timeouts": channel.get("t3Timeout"),
+        "t4_timeouts": channel.get("t4Timeout"),
+    }
+
+
+def verbose_diagnostic_attributes(data):
+    """Return extra channel diagnostics for advanced troubleshooting."""
+    return {
+        "downstream_channels": [
+            summarize_channel(channel) for channel in get_ds_channels(data)
+        ],
+        "upstream_channels": [
+            summarize_channel(channel) for channel in get_us_channels(data)
+        ],
+    }
+
+
+def normalize_access_allowed(value: Any) -> bool | None:
+    """Return accessAllowed as a boolean when the modem value is recognized."""
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, int):
+        if value == 1:
+            return True
+        if value == 0:
+            return False
+
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "allowed", "yes", "1"}:
+            return True
+        if normalized in {"false", "denied", "no", "0"}:
+            return False
+
+    return None
 
 
 def mbit(val):
@@ -264,7 +315,7 @@ def classify_connection_issue(data):
         "cablemodem", {}
     ).get("accessAllowed")
 
-    if access_allowed in [False, "false", "denied", 0]:
+    if normalize_access_allowed(access_allowed) is False:
         return "Mogelijke provider-/CMTS-storing"
 
     if ds_total and ds_locked < ds_total:
@@ -482,6 +533,13 @@ SENSORS = (
         value_fn=lambda d: None,
     ),
     ZiggoModemSensorDescription(
+        key="last_successful_update",
+        name="Laatste succesvolle update",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: None,
+    ),
+    ZiggoModemSensorDescription(
         key="line_stability",
         name="Lijnstabiliteit",
         value_fn=lambda d: evaluate_line_stability(d),
@@ -520,6 +578,9 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
         try:
             if self.entity_description.key == "api_status":
                 return self.coordinator.api_status
+
+            if self.entity_description.key == "last_successful_update":
+                return self.coordinator.last_successful_update
 
             value = self.entity_description.value_fn(self.coordinator.data)
 
@@ -571,11 +632,20 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
     @property
     def extra_state_attributes(self):
         if self.entity_description.key == "api_status":
+            endpoint_status = self.coordinator.endpoint_status
+
             return {
                 "consecutive_failures": self.coordinator.consecutive_failures,
                 "max_failures": self.coordinator.max_failures,
                 "update_interval_seconds": self.coordinator.update_interval_seconds,
                 "paused": self.coordinator.is_paused,
+                "verbose_diagnostics": self.coordinator.verbose_diagnostics,
+                "endpoint_status": endpoint_status,
+                "failed_endpoints": [
+                    endpoint
+                    for endpoint, status in endpoint_status.items()
+                    if status == "failed"
+                ],
             }
 
         if self.entity_description.key != "signal_quality":
@@ -586,7 +656,7 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
         except Exception:
             return None
 
-        return {
+        attributes = {
             "score": quality["score"],
             "reden": quality["reden"],
             "advies": quality["advies"],
@@ -608,3 +678,8 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
             "t3_timeouts_total": quality["t3_timeouts_total"],
             "t3_timeouts_per_hour": quality["t3_timeouts_per_hour"],
         }
+
+        if self.coordinator.verbose_diagnostics:
+            attributes.update(verbose_diagnostic_attributes(self.coordinator.data))
+
+        return attributes

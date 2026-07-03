@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 import logging
 from typing import Any
 
@@ -28,6 +28,8 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         self._consecutive_failures = 0
         self._max_failures = 3
+        self._last_successful_update: datetime | None = None
+        self._endpoint_status: dict[str, str] = {}
 
         scan_interval = entry.options.get(
             CONF_SCAN_INTERVAL,
@@ -59,10 +61,26 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return int(self.update_interval.total_seconds())
 
     @property
+    def last_successful_update(self) -> datetime | None:
+        """Return when data was last fetched successfully."""
+        return self._last_successful_update
+
+    @property
+    def endpoint_status(self) -> dict[str, str]:
+        """Return the status of the most recent endpoint fetch."""
+        return self._endpoint_status
+
+    @property
     def is_paused(self) -> bool:
         """Return whether the integration is currently paused."""
         entry_data = self.hass.data.get(DOMAIN, {}).get(self.entry.entry_id, {})
         return bool(entry_data.get("paused", False))
+
+    @property
+    def verbose_diagnostics(self) -> bool:
+        """Return whether verbose diagnostic attributes are enabled."""
+        entry_data = self.hass.data.get(DOMAIN, {}).get(self.entry.entry_id, {})
+        return bool(entry_data.get("verbose_diagnostics", False))
 
     @property
     def api_status(self) -> str:
@@ -87,6 +105,8 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         try:
             data = await self.api.async_get_data()
             self._consecutive_failures = 0
+            self._last_successful_update = datetime.now(UTC)
+            self._endpoint_status = self.api.last_endpoint_status
             return data
 
         except ZiggoModemAuthError as err:

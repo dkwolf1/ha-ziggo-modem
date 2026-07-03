@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable
+from typing import Any, Callable
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -51,6 +51,37 @@ def sumv(lst, key):
 
 def locked(lst):
     return sum(1 for c in lst if c.get("lockStatus"))
+
+
+def normalize_access_allowed(value: Any) -> bool | None:
+    """Return accessAllowed as a boolean when the modem value is recognized."""
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, int):
+        if value == 1:
+            return True
+        if value == 0:
+            return False
+
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "allowed", "yes", "1"}:
+            return True
+        if normalized in {"false", "denied", "no", "0"}:
+            return False
+
+    return None
+
+
+def internet_access_allowed(data) -> bool:
+    value = data.get("state", {}).get("cablemodem", {}).get("accessAllowed")
+    return normalize_access_allowed(value) is True
+
+
+def internet_outage(data) -> bool:
+    value = data.get("state", {}).get("cablemodem", {}).get("accessAllowed")
+    return normalize_access_allowed(value) is False
 
 
 def has_cable_issue(data):
@@ -133,7 +164,7 @@ BINARY_SENSORS = (
         key="internet_access",
         name="Internettoegang",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
-        value_fn=lambda d: d["state"]["cablemodem"]["accessAllowed"],
+        value_fn=lambda d: internet_access_allowed(d),
     ),
     ZiggoModemBinarySensorDescription(
         key="cable_issue",
@@ -147,7 +178,7 @@ BINARY_SENSORS = (
         name="Internet Storing",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda d: not d["state"]["cablemodem"]["accessAllowed"],
+        value_fn=lambda d: internet_outage(d),
     ),
     ZiggoModemBinarySensorDescription(
         key="upstream_timeouts",
