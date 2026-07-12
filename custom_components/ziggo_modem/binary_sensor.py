@@ -100,7 +100,7 @@ def has_cable_issue(data):
     ds_locked = locked(ds_all)
     ds_total = len(ds_all)
 
-    # 👉 uptime meenemen → alles naar per uur
+    # Include uptime so counters are evaluated as rates per hour.
     uptime = data.get("state", {}).get("cablemodem", {}).get("upTime", 0)
     hours = max(uptime / 3600, 1 / 60)
 
@@ -115,11 +115,11 @@ def has_cable_issue(data):
     # Harde problemen
     # =========================
 
-    # Kanalen niet gelocked → altijd fout
+    # Unlocked channels always indicate a problem.
     if ds_total and ds_locked < ds_total:
         return True
 
-    # Slechte SNR → echt probleem
+    # Bad SNR is a real problem.
     if ds_snr is not None and ds_snr < 33:
         return True
 
@@ -127,11 +127,11 @@ def has_cable_issue(data):
     if ds_power is not None and (ds_power < -12 or ds_power > 12):
         return True
 
-    # Upstream te hoog → modem moet schreeuwen
+    # High upstream power means the modem has to transmit too hard.
     if us_power is not None and us_power > 52:
         return True
 
-    # T4 timeouts → altijd fout
+    # T4 timeouts always indicate a problem.
     if t4_timeouts_total > 0:
         return True
 
@@ -139,16 +139,16 @@ def has_cable_issue(data):
     # Zwaardere instabiliteit (rate-based)
     # =========================
 
-    # Veel OFDM errors per uur → probleem
+    # Many OFDM errors per hour indicate a problem.
     if ofdm_rate > 5000:
         return True
 
-    # Structurele T3 timeouts → probleem
+    # Structural T3 timeouts indicate a problem.
     if t3_rate > 10:
         return True
 
     # =========================
-    # Alles daaronder = geen probleem
+    # Everything below these thresholds is not treated as a problem.
     # =========================
 
     return False
@@ -205,6 +205,10 @@ class ZiggoModemBinarySensor(ZiggoModemBaseEntity, BinarySensorEntity):
     def __init__(self, coordinator, entry_id, host, description):
         super().__init__(coordinator, entry_id, host)
         self.entity_description = description
+        self._translation_key = f"binary_sensor.{description.key}.name"
+        self._attr_name = coordinator.translate(
+            f"binary_sensor.{description.key}.name"
+        )
         self._attr_unique_id = f"{entry_id}_{description.key}"
 
     @property

@@ -13,159 +13,246 @@
 
 ---
 
-## 🔧 Ziggo Modem - Home Assistant Integratie
+## English
 
-Lokale Home Assistant integratie voor Ziggo kabelmodems (Sagemcom).
+Local Home Assistant integration for Ziggo cable modems (Sagemcom).
 
-Deze integratie geeft diepgaand inzicht in je DOCSIS-verbinding, zoals signaalkwaliteit, stabiliteit, fouttellingen en netwerkstatus — volledig lokaal en zonder cloud.
+This integration gives insight into your DOCSIS connection, including signal
+quality, stability, error counters and network status. It works locally and
+does not use SmartWifi Web or any external Ziggo website.
+
+### Features
+
+- Modem status and uptime
+- Downstream signal analysis (power, SNR, errors)
+- Upstream monitoring (power, timeouts)
+- SC-QAM and OFDM error analysis
+- Download and upload profile detection
+- Last successful update timestamp
+- Per-endpoint API status diagnostics
+- Optional verbose diagnostics with channel details
+
+### Installation
+
+#### HACS (recommended)
+
+1. Go to **HACS > Integrations**.
+2. Click **three dots > Custom repositories**.
+3. Add this repository.
+4. Select category **Integration**.
+5. Install **Ziggo Modem**.
+6. Restart Home Assistant.
+
+#### Manual
+
+1. Copy `custom_components/ziggo_modem` to your Home Assistant configuration
+   directory.
+2. Restart Home Assistant.
+
+### Configuration
+
+The integration is configured through the Home Assistant UI:
+
+**Settings > Devices & services > Add integration > Ziggo Modem**
+
+Enter:
+
+- IP address (default: `192.168.100.1`)
+- Username
+- Password
+- Language: `Nederlands` or `English`
+
+The integration requires direct local access to the modem interface/API. The
+local modem IP must be reachable from Home Assistant. SmartWifi Web/cloud login
+is not used.
+
+### Sensors
+
+General:
+
+- Modem status
+- Uptime
+- Signal quality
+- Signal quality explanation
+- Signal quality advice
+- Line stability
+- API status
+- Last successful update
+- Issue classification
+
+Downstream:
+
+- Downstream power (dBmV)
+- Downstream SNR (dB)
+- Channel count
+- Locked channels
+- SC-QAM / OFDM errors
+
+Upstream:
+
+- Upstream power (dBmV)
+- Channel count
+- T3 timeouts
+
+Profile:
+
+- Download profile (Mbit/s)
+- Upload profile (Mbit/s)
+
+Binary sensors:
+
+- Cable issue
+- Internet outage
+- Upstream timeouts present
+- Internet access
+
+Switches and buttons:
+
+- Pause integration
+- Verbose diagnostics
+- Release session
+- Restart modem
+
+### Notes
+
+- Uses an undocumented Ziggo modem API.
+- Works locally only.
+- OFDM values may differ per firmware version.
+- Primarily tested on Sagemcom Ziggo modems.
 
 ---
 
-## ✨ Features
+## Nederlands
+
+Lokale Home Assistant integratie voor Ziggo kabelmodems (Sagemcom).
+
+Deze integratie geeft inzicht in je DOCSIS-verbinding, zoals signaalkwaliteit,
+stabiliteit, fouttellers en netwerkstatus. De integratie werkt lokaal en gebruikt
+geen SmartWifi Web of externe Ziggo-website.
+
+### Functies
 
 - Modemstatus en uptime
 - Downstream signaalanalyse (power, SNR, fouten)
 - Upstream monitoring (power, timeouts)
 - SC-QAM en OFDM foutanalyse
-- Snelheidsprofiel detectie (download / upload)
+- Detectie van download- en uploadprofiel
+- Timestamp van laatste succesvolle update
+- API-status per endpoint
+- Optionele uitgebreide diagnostiek met kanaaldetails
 
-### 📊 Geavanceerde diagnostiek
+### Installatie
 
-- **Signaalkwaliteit**
-  - Goed / Matig / Slecht
-  - Inclusief score, reden, uitleg en advies
+#### HACS (aanbevolen)
 
-- **Lijnstabiliteit**
-  - Stabiel / Licht wisselend / Instabiel
-  - Gebaseerd op gedrag over tijd (errors + timeouts)
+1. Ga naar **HACS > Integraties**.
+2. Klik op **drie puntjes > Custom repositories**.
+3. Voeg deze repository toe.
+4. Kies categorie **Integration**.
+5. Installeer **Ziggo Modem**.
+6. Herstart Home Assistant.
 
-- **Kabelprobleem detectie**
-  - Alleen bij echte DOCSIS-problemen
-  - Geen false positives na reboot
-  - Gebaseerd op rate (per uur) i.p.v. absolute waarden
+#### Handmatig
 
-- **API Status**
-  - OK / Tijdelijke fouten / Instabiel / Gepauzeerd
-  - Geeft inzicht in integratie en modem communicatie
+1. Kopieer `custom_components/ziggo_modem` naar je Home Assistant
+   configuratiemap.
+2. Herstart Home Assistant.
 
-- Volledig lokale API (geen cloud afhankelijkheid)
+### Configuratie
 
----
+De integratie werkt via de Home Assistant UI:
 
-## 📦 Installatie
-
-### HACS (aanbevolen)
-
-1. Ga naar **HACS → Integraties**
-2. Klik op **⋮ → Custom repositories**
-3. Voeg deze repository toe
-4. Kies categorie **Integration**
-5. Installeer **Ziggo Modem**
-6. Herstart Home Assistant
-
----
-
-### Handmatig
-
-1. Kopieer: custom_components/ziggo_modem naar je Home Assistant configuratiemap
-
-2. Herstart Home Assistant
-
----
-
-## ⚙️ Configuratie
-
-De integratie werkt volledig via de UI:
-
-**Instellingen → Apparaten & Diensten → Integratie toevoegen → Ziggo Modem**
+**Instellingen > Apparaten & diensten > Integratie toevoegen > Ziggo Modem**
 
 Voer in:
+
 - IP-adres (standaard: `192.168.100.1`)
 - Gebruikersnaam
 - Wachtwoord
+- Taal: `Nederlands` of `English`
 
----
+De integratie vereist directe lokale toegang tot de modeminterface/API. Het
+lokale modem-IP moet bereikbaar zijn vanaf Home Assistant. SmartWifi Web of
+cloud-login wordt niet gebruikt.
 
-## 📊 Sensoren
+### Sensoren
 
-### Algemeen
+Algemeen:
+
 - Modemstatus
 - Uptime
 - Signaalkwaliteit
 - Signaalkwaliteit uitleg
 - Signaalkwaliteit advies
 - Lijnstabiliteit
-- API status
+- API-status
+- Laatste succesvolle update
+- Storingsclassificatie
 
-### Downstream
-- Downstream Power (dBmV)
+Downstream:
+
+- Downstream power (dBmV)
 - Downstream SNR (dB)
 - Aantal kanalen
 - Gelockte kanalen
-- Fouten (SC-QAM / OFDM)
+- SC-QAM / OFDM fouten
 
-### Upstream
-- Upstream Power (dBmV)
+Upstream:
+
+- Upstream power (dBmV)
 - Aantal kanalen
 - T3 timeouts
 
-### Snelheidsprofiel
+Profiel:
+
 - Downloadprofiel (Mbit/s)
 - Uploadprofiel (Mbit/s)
 
----
-
-## 🚨 Binary sensors
+Binary sensors:
 
 - Kabelprobleem
 - Internet storing
 - Upstream timeouts aanwezig
 - Internettoegang
 
----
+Switches en buttons:
 
-## ℹ️ Uitleg sensoren
+- Integratie pauzeren
+- Uitgebreide diagnostiek
+- Sessie vrijgeven
+- Modem herstarten
 
-- **Internettoegang**
-  → geeft aan of het modem verbinding heeft met het netwerk
+### Opmerkingen
 
-- **Signaalkwaliteit**
-  → technische beoordeling van DOCSIS waarden (SNR, power, errors)
-
-- **Lijnstabiliteit**
-  → geeft aan hoe stabiel de verbinding zich gedraagt over tijd
-
-- **Kabelprobleem**
-  → alleen actief bij duidelijke technische problemen (niet bij kleine afwijkingen)
-
-- **API status**
-  → status van de integratie en communicatie met het modem
+- Gebruikt een ongedocumenteerde Ziggo modem API.
+- Werkt alleen lokaal.
+- OFDM-waarden kunnen verschillen per firmware.
+- Primair getest op Sagemcom Ziggo modems.
 
 ---
 
-## ⚠️ Opmerkingen
+## Disclaimer
 
-- Gebruikt een ongedocumenteerde Ziggo modem API
-- Werkt alleen lokaal (192.168.100.1)
-- OFDM-waarden kunnen verschillen per firmware
-- Primair getest op Sagemcom Ziggo modems
-
----
-
-## ⚖️ Disclaimer
+This project is not affiliated with Ziggo.
 
 Dit project is niet gelieerd aan Ziggo.
+
+Use at your own risk. API endpoints may change with firmware updates.
 
 Gebruik op eigen risico. API endpoints kunnen wijzigen bij firmware-updates.
 
 ---
 
-## 🤝 Bijdragen
+## Contributing / Bijdragen
 
-Zie [CONTRIBUTING.md](CONTRIBUTING.md)
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Zie [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-## 📜 Licentie
+## License / Licentie
 
-Dit project valt onder de **MPL-2.0 licentie**
+This project is licensed under the **MPL-2.0 license**.
+
+Dit project valt onder de **MPL-2.0 licentie**.

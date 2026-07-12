@@ -48,7 +48,8 @@ class ZiggoModemReleaseSessionButton(ZiggoModemBaseEntity, ButtonEntity):
     ) -> None:
         super().__init__(coordinator, entry_id, host)
         self._api = api
-        self._attr_name = "Sessie Vrijgeven"
+        self._translation_key = "button.release_session.name"
+        self._attr_name = coordinator.translate("button.release_session.name")
         self._attr_unique_id = f"{entry_id}_release_session"
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_icon = "mdi:connection"
@@ -71,7 +72,8 @@ class ZiggoModemRebootButton(ZiggoModemBaseEntity, ButtonEntity):
     ) -> None:
         super().__init__(coordinator, entry_id, host)
         self._api = api
-        self._attr_name = "Modem Herstarten"
+        self._translation_key = "button.reboot.name"
+        self._attr_name = coordinator.translate("button.reboot.name")
         self._attr_unique_id = f"{entry_id}_reboot"
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_icon = "mdi:restart"

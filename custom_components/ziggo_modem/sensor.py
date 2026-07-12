@@ -13,8 +13,9 @@ from homeassistant.components.sensor import (
 from homeassistant.const import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CONF_HOST, DOMAIN
+from .const import CONF_HOST, DEFAULT_LANGUAGE, DOMAIN, LANGUAGE_NL
 from .entity import ZiggoModemBaseEntity
+from .i18n import translate
 
 
 # =========================
@@ -22,7 +23,7 @@ from .entity import ZiggoModemBaseEntity
 # =========================
 
 
-def format_uptime(seconds):
+def format_uptime(seconds, language=DEFAULT_LANGUAGE):
     if seconds is None:
         return None
 
@@ -36,7 +37,7 @@ def format_uptime(seconds):
     if days:
         parts.append(f"{days}d")
     if hours or days:
-        parts.append(f"{hours}u")
+        parts.append(f"{hours}u" if language == LANGUAGE_NL else f"{hours}h")
     parts.append(f"{minutes}m")
 
     return " ".join(parts)
@@ -142,7 +143,7 @@ def first_serviceflow_rate(data, direction):
     return None
 
 
-def evaluate_signal_quality(data):
+def evaluate_signal_quality(data, language=DEFAULT_LANGUAGE):
     ds_all = get_ds_channels(data)
     us_all = get_us_channels(data)
 
@@ -172,90 +173,101 @@ def evaluate_signal_quality(data):
 
     if ds_total and ds_locked < ds_total:
         score -= 35
-        reasons.append("Niet alle downstream kanalen zijn gelocked")
+        reasons.append(
+            translate(language, "signal_quality.reason.downstream_unlocked")
+        )
 
     if ds_power is not None:
         if ds_power < -10 or ds_power > 10:
             score -= 25
-            reasons.append("Downstream power sterk afwijkend")
+            reasons.append(
+                translate(language, "signal_quality.reason.downstream_power_high")
+            )
         elif ds_power < -8 or ds_power > 8:
             score -= 10
-            reasons.append("Downstream power licht afwijkend")
+            reasons.append(
+                translate(language, "signal_quality.reason.downstream_power_warning")
+            )
 
     if ds_snr is not None:
         if ds_snr < 34:
             score -= 40
-            reasons.append("Downstream SNR te laag")
+            reasons.append(
+                translate(language, "signal_quality.reason.downstream_snr_bad")
+            )
         elif ds_snr < 37:
             score -= 25
-            reasons.append("Downstream SNR verlaagd")
+            reasons.append(
+                translate(language, "signal_quality.reason.downstream_snr_low")
+            )
         elif ds_snr < 40:
             score -= 10
-            reasons.append("Downstream SNR iets lager dan ideaal")
+            reasons.append(
+                translate(language, "signal_quality.reason.downstream_snr_warning")
+            )
 
     if us_power is not None:
         if us_power > 52:
             score -= 35
-            reasons.append("Upstream power te hoog")
+            reasons.append(
+                translate(language, "signal_quality.reason.upstream_power_bad")
+            )
         elif us_power > 50:
             score -= 20
-            reasons.append("Upstream power verhoogd")
+            reasons.append(
+                translate(language, "signal_quality.reason.upstream_power_high")
+            )
         elif us_power > 48:
             score -= 10
-            reasons.append("Upstream power licht verhoogd")
+            reasons.append(
+                translate(language, "signal_quality.reason.upstream_power_warning")
+            )
 
     if ofdm_uncorrected_rate > 5000:
         score -= 35
-        reasons.append("Veel OFDM uncorrected errors per uur")
+        reasons.append(translate(language, "signal_quality.reason.ofdm_errors_bad"))
     elif ofdm_uncorrected_rate > 1000:
         score -= 20
-        reasons.append("Verhoogde OFDM uncorrected errors per uur")
+        reasons.append(translate(language, "signal_quality.reason.ofdm_errors_high"))
     elif ofdm_uncorrected_rate > 100:
         score -= 5
-        reasons.append("Lichte OFDM erroractiviteit per uur")
+        reasons.append(translate(language, "signal_quality.reason.ofdm_errors_warning"))
 
     if scqam_uncorrected_rate > 100:
         score -= 15
-        reasons.append("Verhoogde SC-QAM uncorrected errors per uur")
+        reasons.append(translate(language, "signal_quality.reason.scqam_errors_high"))
     elif scqam_uncorrected_rate > 10:
         score -= 5
-        reasons.append("Lichte SC-QAM erroractiviteit per uur")
+        reasons.append(
+            translate(language, "signal_quality.reason.scqam_errors_warning")
+        )
 
     if t3_timeouts_rate > 10:
         score -= 20
-        reasons.append("Meerdere T3 timeouts per uur")
+        reasons.append(translate(language, "signal_quality.reason.t3_timeouts_high"))
     elif t3_timeouts_rate > 2:
         score -= 10
-        reasons.append("T3 timeout(s) per uur aanwezig")
+        reasons.append(translate(language, "signal_quality.reason.t3_timeouts_warning"))
 
     score = max(score, 0)
 
     if score >= 80:
-        status = "Goed"
-        advice = "Geen actie nodig"
-        explanation = "DOCSIS signaalwaarden vallen binnen normale marges."
+        status = translate(language, "signal_quality.good")
+        advice = translate(language, "signal_quality.advice.none")
+        explanation = translate(language, "signal_quality.explanation.good")
     elif score >= 50:
-        status = "Matig"
-        advice = "Controleer coaxverbindingen en houd fouttellers in de gaten"
-        explanation = (
-            "Er zijn afwijkingen zichtbaar in de DOCSIS signaalwaarden, "
-            "maar de verbinding kan nog stabiel functioneren."
-        )
+        status = translate(language, "signal_quality.moderate")
+        advice = translate(language, "signal_quality.advice.watch")
+        explanation = translate(language, "signal_quality.explanation.moderate")
     else:
-        status = "Slecht"
-        advice = (
-            "Controleer splitter, coaxkabel en wandcontactdoos "
-            "of neem contact op met de provider"
-        )
-        explanation = (
-            "Er zijn duidelijke afwijkingen zichtbaar die relevant kunnen zijn "
-            "bij storingen, uitval of instabiliteit."
-        )
+        status = translate(language, "signal_quality.bad")
+        advice = translate(language, "signal_quality.advice.contact")
+        explanation = translate(language, "signal_quality.explanation.bad")
 
     reason = (
         ", ".join(reasons)
         if reasons
-        else "Signaalwaarden vallen binnen normale marges"
+        else translate(language, "signal_quality.reason.normal")
     )
 
     return {
@@ -264,10 +276,7 @@ def evaluate_signal_quality(data):
         "reden": reason,
         "advies": advice,
         "uitleg": explanation,
-        "opmerking": (
-            "Dit is een indicatie van DOCSIS signaalkwaliteit en niet van de "
-            "totale internetervaring"
-        ),
+        "opmerking": translate(language, "signal_quality.note"),
         "uptime_hours": round(hours, 2),
         "downstream_power_avg": ds_power,
         "downstream_snr_min": ds_snr,
@@ -283,24 +292,24 @@ def evaluate_signal_quality(data):
     }
 
 
-def evaluate_line_stability(data):
-    quality = evaluate_signal_quality(data)
+def evaluate_line_stability(data, language=DEFAULT_LANGUAGE):
+    quality = evaluate_signal_quality(data, language)
 
     score = quality["score"]
     t3_rate = quality["t3_timeouts_per_hour"]
     ofdm_rate = quality["ofdm_uncorrected_errors_per_hour"]
 
     if score >= 80 and t3_rate == 0 and ofdm_rate < 100:
-        return "Stabiel"
+        return translate(language, "line_stability.stable")
 
     if score >= 50:
-        return "Licht wisselend"
+        return translate(language, "line_stability.variable")
 
-    return "Instabiel"
+    return translate(language, "line_stability.unstable")
 
 
-def classify_connection_issue(data):
-    quality = evaluate_signal_quality(data)
+def classify_connection_issue(data, language=DEFAULT_LANGUAGE):
+    quality = evaluate_signal_quality(data, language)
 
     ds_snr = quality["downstream_snr_min"]
     ds_power = quality["downstream_power_avg"]
@@ -316,42 +325,42 @@ def classify_connection_issue(data):
     ).get("accessAllowed")
 
     if normalize_access_allowed(access_allowed) is False:
-        return "Mogelijke provider-/CMTS-storing"
+        return translate(language, "issue.provider")
 
     if ds_total and ds_locked < ds_total:
-        return "Mogelijk kanaalprobleem"
+        return translate(language, "issue.channel")
 
     if us_power is not None and us_power > 52:
-        return "Mogelijk coaxprobleem"
+        return translate(language, "issue.coax")
 
     if t3_rate > 10:
-        return "Mogelijk coaxprobleem"
+        return translate(language, "issue.coax")
 
     if ds_snr is not None and ds_snr < 34:
-        return "Mogelijke instraling / ruis"
+        return translate(language, "issue.noise")
 
     if ofdm_rate > 5000:
-        return "Mogelijke instraling / ruis"
+        return translate(language, "issue.noise")
 
     if ds_power is not None and (ds_power < -10 or ds_power > 10):
-        return "Mogelijk coaxprobleem"
+        return translate(language, "issue.coax")
 
     if scqam_rate > 100:
-        return "Mogelijk coaxprobleem"
+        return translate(language, "issue.coax")
 
-    return "Geen duidelijke storing"
-
-
-def signal_quality(data):
-    return evaluate_signal_quality(data)["status"]
+    return translate(language, "issue.none")
 
 
-def signal_quality_explanation(data):
-    return evaluate_signal_quality(data)["uitleg"]
+def signal_quality(data, language=DEFAULT_LANGUAGE):
+    return evaluate_signal_quality(data, language)["status"]
 
 
-def signal_quality_advice(data):
-    return evaluate_signal_quality(data)["advies"]
+def signal_quality_explanation(data, language=DEFAULT_LANGUAGE):
+    return evaluate_signal_quality(data, language)["uitleg"]
+
+
+def signal_quality_advice(data, language=DEFAULT_LANGUAGE):
+    return evaluate_signal_quality(data, language)["advies"]
 
 
 DELTA_RATE_SENSOR_KEYS = {
@@ -567,6 +576,8 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
     def __init__(self, coordinator, entry_id, host, description):
         super().__init__(coordinator, entry_id, host)
         self.entity_description = description
+        self._translation_key = f"sensor.{description.key}.name"
+        self._attr_name = coordinator.translate(f"sensor.{description.key}.name")
         self._attr_unique_id = f"{entry_id}_{description.key}"
         self._last_delta_total = None
         self._last_delta_time = None
@@ -576,11 +587,34 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
     @property
     def native_value(self):
         try:
+            language = self.coordinator.language
+
             if self.entity_description.key == "api_status":
                 return self.coordinator.api_status
 
             if self.entity_description.key == "last_successful_update":
                 return self.coordinator.last_successful_update
+
+            if self.entity_description.key == "uptime":
+                uptime = self.coordinator.data.get("state", {}).get(
+                    "cablemodem", {}
+                ).get("upTime")
+                return format_uptime(uptime, language)
+
+            if self.entity_description.key == "signal_quality":
+                return signal_quality(self.coordinator.data, language)
+
+            if self.entity_description.key == "signal_quality_explanation":
+                return signal_quality_explanation(self.coordinator.data, language)
+
+            if self.entity_description.key == "signal_quality_advice":
+                return signal_quality_advice(self.coordinator.data, language)
+
+            if self.entity_description.key == "line_stability":
+                return evaluate_line_stability(self.coordinator.data, language)
+
+            if self.entity_description.key == "issue_classification":
+                return classify_connection_issue(self.coordinator.data, language)
 
             value = self.entity_description.value_fn(self.coordinator.data)
 
@@ -640,6 +674,7 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
                 "update_interval_seconds": self.coordinator.update_interval_seconds,
                 "paused": self.coordinator.is_paused,
                 "verbose_diagnostics": self.coordinator.verbose_diagnostics,
+                "language": self.coordinator.language,
                 "endpoint_status": endpoint_status,
                 "failed_endpoints": [
                     endpoint
@@ -652,15 +687,31 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
             return None
 
         try:
-            quality = evaluate_signal_quality(self.coordinator.data)
+            quality = evaluate_signal_quality(
+                self.coordinator.data,
+                self.coordinator.language,
+            )
         except Exception:
             return None
 
+        language = self.coordinator.language
+        text_attributes = (
+            {
+                "reden": quality["reden"],
+                "advies": quality["advies"],
+                "opmerking": quality["opmerking"],
+            }
+            if language == LANGUAGE_NL
+            else {
+                "reason": quality["reden"],
+                "advice": quality["advies"],
+                "note": quality["opmerking"],
+            }
+        )
+
         attributes = {
+            **text_attributes,
             "score": quality["score"],
-            "reden": quality["reden"],
-            "advies": quality["advies"],
-            "opmerking": quality["opmerking"],
             "uptime_hours": quality["uptime_hours"],
             "downstream_power_avg": quality["downstream_power_avg"],
             "downstream_snr_min": quality["downstream_snr_min"],

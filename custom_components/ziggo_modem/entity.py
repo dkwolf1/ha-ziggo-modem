@@ -22,7 +22,15 @@ class ZiggoModemBaseEntity(CoordinatorEntity[ZiggoModemDataUpdateCoordinator]):
         super().__init__(coordinator)
         self._entry_id = entry_id
         self._host = host
+        self._translation_key: str | None = None
         self._attr_has_entity_name = True
+
+    @property
+    def name(self) -> str | None:
+        """Return the translated entity name."""
+        if self._translation_key:
+            return self.coordinator.translate(self._translation_key)
+        return getattr(self, "_attr_name", None)
 
     @property
     def device_info(self) -> DeviceInfo:
