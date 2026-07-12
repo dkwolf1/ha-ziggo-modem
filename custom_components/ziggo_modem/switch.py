@@ -57,7 +57,8 @@ class ZiggoModemPauseSwitch(ZiggoModemBaseEntity, SwitchEntity):
         self.hass = hass
         self._entry_id = entry_id
         self._api = api
-        self._attr_name = "Integratie pauzeren"
+        self._translation_key = "switch.pause.name"
+        self._attr_name = coordinator.translate("switch.pause.name")
         self._attr_unique_id = f"{entry_id}_pause_integration"
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
@@ -92,7 +93,8 @@ class ZiggoModemVerboseDiagnosticsSwitch(ZiggoModemBaseEntity, SwitchEntity):
         super().__init__(coordinator, entry.entry_id, host)
         self.hass = hass
         self._entry = entry
-        self._attr_name = "Uitgebreide diagnostiek"
+        self._translation_key = "switch.verbose_diagnostics.name"
+        self._attr_name = coordinator.translate("switch.verbose_diagnostics.name")
         self._attr_unique_id = f"{entry.entry_id}_verbose_diagnostics"
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_icon = "mdi:text-box-search"
@@ -112,7 +114,7 @@ class ZiggoModemVerboseDiagnosticsSwitch(ZiggoModemBaseEntity, SwitchEntity):
 
     async def _set_verbose_diagnostics(self, enabled: bool) -> None:
         self.hass.data[DOMAIN][self._entry.entry_id][
-            "verbose_diagnostics"
+            CONF_VERBOSE_DIAGNOSTICS
         ] = enabled
 
         self.hass.config_entries.async_update_entry(

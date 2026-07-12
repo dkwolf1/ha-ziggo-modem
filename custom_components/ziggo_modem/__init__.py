@@ -6,9 +6,11 @@ from homeassistant.core import HomeAssistant
 from .api import ZiggoModemApi
 from .const import (
     CONF_HOST,
+    CONF_LANGUAGE,
     CONF_PASSWORD,
     CONF_USERNAME,
     CONF_VERBOSE_DIAGNOSTICS,
+    DEFAULT_LANGUAGE,
     DEFAULT_VERBOSE_DIAGNOSTICS,
     DOMAIN,
     PLATFORMS,
@@ -40,6 +42,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             CONF_VERBOSE_DIAGNOSTICS,
             DEFAULT_VERBOSE_DIAGNOSTICS,
         ),
+        CONF_LANGUAGE: entry.options.get(CONF_LANGUAGE, DEFAULT_LANGUAGE),
     }
 
     await coordinator.async_config_entry_first_refresh()

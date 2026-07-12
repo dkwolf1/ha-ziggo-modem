@@ -9,7 +9,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import ZiggoModemApi, ZiggoModemApiError, ZiggoModemAuthError
-from .const import CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN
+from .const import (
+    CONF_LANGUAGE,
+    CONF_SCAN_INTERVAL,
+    CONF_VERBOSE_DIAGNOSTICS,
+    DEFAULT_LANGUAGE,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+)
+from .i18n import translate
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -80,21 +88,31 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def verbose_diagnostics(self) -> bool:
         """Return whether verbose diagnostic attributes are enabled."""
         entry_data = self.hass.data.get(DOMAIN, {}).get(self.entry.entry_id, {})
-        return bool(entry_data.get("verbose_diagnostics", False))
+        return bool(entry_data.get(CONF_VERBOSE_DIAGNOSTICS, False))
+
+    @property
+    def language(self) -> str:
+        """Return the configured integration language."""
+        entry_data = self.hass.data.get(DOMAIN, {}).get(self.entry.entry_id, {})
+        return entry_data.get(CONF_LANGUAGE, DEFAULT_LANGUAGE)
+
+    def translate(self, key: str) -> str:
+        """Translate a key using the configured integration language."""
+        return translate(self.language, key)
 
     @property
     def api_status(self) -> str:
         """Return a human-readable API status."""
         if self.is_paused:
-            return "Gepauzeerd"
+            return self.translate("api_status.paused")
 
         if self._consecutive_failures == 0:
-            return "OK"
+            return self.translate("api_status.ok")
 
         if self._consecutive_failures < self._max_failures:
-            return "Tijdelijke fouten"
+            return self.translate("api_status.temporary_errors")
 
-        return "Instabiel"
+        return self.translate("api_status.unstable")
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from modem unless paused."""

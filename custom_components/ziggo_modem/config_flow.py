@@ -9,15 +9,24 @@ from homeassistant.data_entry_flow import FlowResult
 from .api import ZiggoModemApi, ZiggoModemApiError, ZiggoModemAuthError
 from .const import (
     CONF_HOST,
+    CONF_LANGUAGE,
     CONF_PASSWORD,
     CONF_SCAN_INTERVAL,
     CONF_USERNAME,
     CONF_VERBOSE_DIAGNOSTICS,
     DEFAULT_HOST,
+    DEFAULT_LANGUAGE,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_VERBOSE_DIAGNOSTICS,
     DOMAIN,
+    LANGUAGE_EN,
+    LANGUAGE_NL,
 )
+
+LANGUAGE_SELECTOR = {
+    LANGUAGE_NL: "Nederlands",
+    LANGUAGE_EN: "English",
+}
 
 
 class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -32,6 +41,7 @@ class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             host = user_input[CONF_HOST]
             username = user_input[CONF_USERNAME]
             password = user_input[CONF_PASSWORD]
+            language = user_input[CONF_LANGUAGE]
 
             api = ZiggoModemApi(host, username, password)
 
@@ -57,6 +67,7 @@ class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     options={
                         CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
                         CONF_VERBOSE_DIAGNOSTICS: DEFAULT_VERBOSE_DIAGNOSTICS,
+                        CONF_LANGUAGE: language,
                     },
                 )
 
@@ -67,6 +78,10 @@ class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_HOST, default=DEFAULT_HOST): str,
                     vol.Required(CONF_USERNAME): str,
                     vol.Required(CONF_PASSWORD): str,
+                    vol.Required(
+                        CONF_LANGUAGE,
+                        default=DEFAULT_LANGUAGE,
+                    ): vol.In(LANGUAGE_SELECTOR),
                 }
             ),
             errors=errors,
@@ -104,6 +119,10 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlow):
             CONF_VERBOSE_DIAGNOSTICS,
             DEFAULT_VERBOSE_DIAGNOSTICS,
         )
+        current_language = self.config_entry.options.get(
+            CONF_LANGUAGE,
+            DEFAULT_LANGUAGE,
+        )
 
         if user_input is not None:
             host = user_input[CONF_HOST]
@@ -125,6 +144,16 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlow):
                 await api.async_close()
 
             if not errors:
+                entry_data = self.hass.data.get(DOMAIN, {}).get(
+                    self.config_entry.entry_id
+                )
+                if entry_data:
+                    entry_data[CONF_VERBOSE_DIAGNOSTICS] = user_input[
+                        CONF_VERBOSE_DIAGNOSTICS
+                    ]
+                    entry_data[CONF_LANGUAGE] = user_input[CONF_LANGUAGE]
+                    entry_data["coordinator"].async_update_listeners()
+
                 return self.async_create_entry(
                     title="",
                     data={
@@ -135,6 +164,7 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlow):
                         CONF_VERBOSE_DIAGNOSTICS: user_input[
                             CONF_VERBOSE_DIAGNOSTICS
                         ],
+                        CONF_LANGUAGE: user_input[CONF_LANGUAGE],
                     },
                 )
 
@@ -153,6 +183,10 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlow):
                         CONF_VERBOSE_DIAGNOSTICS,
                         default=current_verbose_diagnostics,
                     ): bool,
+                    vol.Required(
+                        CONF_LANGUAGE,
+                        default=current_language,
+                    ): vol.In(LANGUAGE_SELECTOR),
                 }
             ),
             errors=errors,
