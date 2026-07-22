@@ -24,6 +24,8 @@ does not use SmartWifi Web or any external Ziggo website.
 ### Features
 
 - Modem status and uptime
+- Modem model, firmware, hardware, serial number and MAC address in device info
+- Downloadable, privacy-redacted Home Assistant diagnostics
 - Downstream signal analysis (power, SNR, errors)
 - Upstream monitoring (power, timeouts)
 - SC-QAM and OFDM error analysis
@@ -113,6 +115,18 @@ Switches and buttons:
 - Release session
 - Restart modem
 
+### Diagnostics
+
+For troubleshooting or a GitHub issue, download a diagnostic file from:
+
+**Settings > Devices & services > Ziggo Modem > three-dot menu > Download diagnostics**
+
+The download is also available from the modem device page. It contains the
+integration settings, coordinator status, endpoint results and the latest modem
+API data. Passwords, usernames, tokens, local IP addresses, serial numbers, MAC
+addresses and network identifiers are automatically redacted. Review the file
+before sharing it publicly.
+
 ### Notes
 
 - Uses an undocumented Ziggo modem API.
@@ -133,6 +147,8 @@ geen SmartWifi Web of externe Ziggo-website.
 ### Functies
 
 - Modemstatus en uptime
+- Modemmodel, firmware, hardware, serienummer en MAC-adres in apparaatinfo
+- Downloadbare Home Assistant-diagnostiek met privacyfilter
 - Downstream signaalanalyse (power, SNR, fouten)
 - Upstream monitoring (power, timeouts)
 - SC-QAM en OFDM foutanalyse
@@ -221,6 +237,19 @@ Switches en buttons:
 - Uitgebreide diagnostiek
 - Sessie vrijgeven
 - Modem herstarten
+
+### Diagnostiek
+
+Download voor probleemonderzoek of een GitHub-issue een diagnostiekbestand via:
+
+**Instellingen > Apparaten & diensten > Ziggo Modem > menu met drie punten >
+Diagnostiek downloaden**
+
+De download is ook beschikbaar op de apparaatpagina van het modem. Het bestand
+bevat de integratie-instellingen, coordinatorstatus, endpointresultaten en de
+laatste modem-API-data. Wachtwoorden, gebruikersnamen, tokens, lokale
+IP-adressen, serienummers, MAC-adressen en netwerkidentificatie worden
+automatisch afgeschermd. Controleer het bestand voordat je het openbaar deelt.
 
 ### Opmerkingen
 

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from typing import Any
+
 from homeassistant.helpers.device_registry import (
     CONNECTION_NETWORK_MAC,
     DeviceInfo,
@@ -8,6 +11,19 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import ZiggoModemDataUpdateCoordinator
+
+
+def _first_text(
+    sources: Sequence[Mapping[str, Any]],
+    keys: Sequence[str],
+) -> str | None:
+    """Return the first non-empty device information value."""
+    for source in sources:
+        for key in keys:
+            value = source.get(key)
+            if value is not None and str(value).strip():
+                return str(value).strip()
+    return None
 
 
 class ZiggoModemBaseEntity(CoordinatorEntity[ZiggoModemDataUpdateCoordinator]):
@@ -35,12 +51,48 @@ class ZiggoModemBaseEntity(CoordinatorEntity[ZiggoModemDataUpdateCoordinator]):
     @property
     def device_info(self) -> DeviceInfo:
         """Return device info for the Ziggo modem."""
-        state = self.coordinator.data.get("state", {})
+        data = self.coordinator.data or {}
+        state = data.get("state", {})
         cablemodem = state.get("cablemodem", {})
+        system = state.get("system", {})
+        device = state.get("device", {})
+        software_update = data.get("softwareupdate", {}).get("softwareUpdate", {})
 
-        serial = cablemodem.get("serialNumber")
-        mac = cablemodem.get("macAddress")
-        docsis = cablemodem.get("docsisVersion")
+        sources = tuple(
+            source
+            for source in (cablemodem, system, device, software_update)
+            if isinstance(source, Mapping)
+        )
+
+        manufacturer = _first_text(
+            sources,
+            ("manufacturer", "manufacturerName", "vendor", "vendorName"),
+        ) or "Sagemcom"
+        model = _first_text(
+            sources,
+            ("modelName", "model", "productName", "productClass", "deviceModel"),
+        )
+        serial = _first_text(sources, ("serialNumber", "serial", "serialNo"))
+        mac = _first_text(sources, ("macAddress", "mac", "cmMacAddress"))
+        firmware = _first_text(
+            sources,
+            (
+                "firmwareVersion",
+                "softwareVersion",
+                "currentVersion",
+                "currentSoftwareVersion",
+            ),
+        )
+        hardware = _first_text(
+            sources,
+            ("hardwareVersion", "hardwareRevision", "hwVersion"),
+        )
+        docsis = _first_text(sources, ("docsisVersion",))
+
+        if not model:
+            model = "SmartWifi modem"
+            if docsis:
+                model = f"{model} (DOCSIS {docsis})"
 
         identifiers = {
             (DOMAIN, serial or self._host),
@@ -50,15 +102,14 @@ class ZiggoModemBaseEntity(CoordinatorEntity[ZiggoModemDataUpdateCoordinator]):
         if mac:
             connections.add((CONNECTION_NETWORK_MAC, mac.lower()))
 
-        sw_version = f"DOCSIS {docsis}" if docsis else None
-
         return DeviceInfo(
             identifiers=identifiers,
             connections=connections,
             name="Ziggo Modem",
-            manufacturer="Sagemcom",
-            model="SmartWifi modem",
+            manufacturer=manufacturer,
+            model=model,
             serial_number=serial,
             configuration_url=f"https://{self._host}",
-            sw_version=sw_version,
+            sw_version=firmware,
+            hw_version=hardware,
         )
