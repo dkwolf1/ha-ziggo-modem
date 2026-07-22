@@ -6,7 +6,7 @@
         "description": "Voer de gegevens van je Ziggo modem in.",
         "data": {
           "host": "IP-adres",
-          "username": "Gebruikersnaam",
+          "username": "Gebruikersnaam (optioneel)",
           "password": "Wachtwoord",
           "language": "Taal van integratie"
         }
@@ -28,7 +28,7 @@
         "description": "Pas de instellingen van de integratie aan.",
         "data": {
           "host": "IP-adres",
-          "username": "Gebruikersnaam",
+          "username": "Gebruikersnaam (optioneel)",
           "password": "Wachtwoord",
           "scan_interval": "Polling interval (seconden)",
           "verbose_diagnostics": "Uitgebreide diagnostiek",

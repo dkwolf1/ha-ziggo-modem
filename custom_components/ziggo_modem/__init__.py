@@ -21,7 +21,10 @@ from .coordinator import ZiggoModemDataUpdateCoordinator
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Ziggo modem from a config entry."""
     host = entry.options.get(CONF_HOST, entry.data[CONF_HOST])
-    username = entry.options.get(CONF_USERNAME, entry.data[CONF_USERNAME])
+    username = entry.options.get(
+        CONF_USERNAME,
+        entry.data.get(CONF_USERNAME, ""),
+    )
     password = entry.options.get(CONF_PASSWORD, entry.data[CONF_PASSWORD])
 
     api = ZiggoModemApi(
