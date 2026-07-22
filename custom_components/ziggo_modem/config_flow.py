@@ -39,7 +39,7 @@ class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             host = user_input[CONF_HOST]
-            username = user_input[CONF_USERNAME]
+            username = user_input.get(CONF_USERNAME, "")
             password = user_input[CONF_PASSWORD]
             language = user_input[CONF_LANGUAGE]
 
@@ -76,7 +76,7 @@ class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_HOST, default=DEFAULT_HOST): str,
-                    vol.Required(CONF_USERNAME): str,
+                    vol.Optional(CONF_USERNAME, default=""): str,
                     vol.Required(CONF_PASSWORD): str,
                     vol.Required(
                         CONF_LANGUAGE,
@@ -126,7 +126,7 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlow):
 
         if user_input is not None:
             host = user_input[CONF_HOST]
-            username = user_input[CONF_USERNAME]
+            username = user_input.get(CONF_USERNAME, "")
             password = user_input[CONF_PASSWORD]
 
             api = ZiggoModemApi(host, username, password)
@@ -173,7 +173,7 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlow):
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_HOST, default=current_host): str,
-                    vol.Required(CONF_USERNAME, default=current_username): str,
+                    vol.Optional(CONF_USERNAME, default=current_username): str,
                     vol.Required(CONF_PASSWORD, default=current_password): str,
                     vol.Required(
                         CONF_SCAN_INTERVAL,

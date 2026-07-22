@@ -73,10 +73,9 @@ class ZiggoModemApi:
             raise ZiggoModemApiError("HTTP session not initialized")
 
         url = f"{self._base_url}/user/login"
-        payload = {
-            "username": self._username,
-            "password": self._password,
-        }
+        payload = {"password": self._password}
+        if self._username:
+            payload["username"] = self._username
 
         _LOGGER.debug("Logging in to Ziggo modem at %s", self._host)
 

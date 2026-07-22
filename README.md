@@ -58,7 +58,7 @@ The integration is configured through the Home Assistant UI:
 Enter:
 
 - IP address (default: `192.168.100.1`)
-- Username
+- Username (optional; leave empty for password-only modems)
 - Password
 - Language: `Nederlands` or `English`
 
@@ -167,7 +167,7 @@ De integratie werkt via de Home Assistant UI:
 Voer in:
 
 - IP-adres (standaard: `192.168.100.1`)
-- Gebruikersnaam
+- Gebruikersnaam (optioneel; laat leeg voor modems met alleen een wachtwoord)
 - Wachtwoord
 - Taal: `Nederlands` of `English`
 

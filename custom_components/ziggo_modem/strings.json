@@ -6,7 +6,7 @@
         "description": "Enter your Ziggo modem details.",
         "data": {
           "host": "IP address",
-          "username": "Username",
+          "username": "Username (optional)",
           "password": "Password",
           "language": "Integration language"
         }
@@ -28,7 +28,7 @@
         "description": "Change the integration settings.",
         "data": {
           "host": "IP address",
-          "username": "Username",
+          "username": "Username (optional)",
           "password": "Password",
           "scan_interval": "Polling interval (seconds)",
           "verbose_diagnostics": "Verbose diagnostics",
