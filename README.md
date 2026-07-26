@@ -26,6 +26,8 @@ does not use SmartWifi Web or any external Ziggo website.
 - Modem status and uptime
 - Modem model, firmware, hardware, serial number and MAC address in device info
 - Downloadable, privacy-redacted Home Assistant diagnostics
+- Configurable DOCSIS signal thresholds
+- Persistent connection interruption and failed update history
 - Downstream signal analysis (power, SNR, errors)
 - Upstream monitoring (power, timeouts)
 - SC-QAM and OFDM error analysis
@@ -68,6 +70,20 @@ The integration requires direct local access to the modem interface/API. The
 local modem IP must be reachable from Home Assistant. SmartWifi Web/cloud login
 is not used.
 
+### Options
+
+Open **Settings > Devices & services > Ziggo Modem > Configure** to change:
+
+- Minimum downstream power (default: `-10 dBmV`)
+- Maximum downstream power (default: `10 dBmV`)
+- Minimum downstream SNR (default: `34 dB`)
+- Maximum upstream power (default: `52 dBmV`)
+
+These thresholds affect signal quality, issue classification and the cable
+issue sensor. The defaults preserve the original integration behavior. The
+cable issue sensor keeps an additional safety margin to avoid triggering on
+minor fluctuations.
+
 ### Sensors
 
 General:
@@ -80,6 +96,9 @@ General:
 - Line stability
 - API status
 - Last successful update
+- Connection interruptions
+- Failed updates
+- Last modem restart
 - Issue classification
 
 Downstream:
@@ -127,6 +146,15 @@ API data. Passwords, usernames, tokens, local IP addresses, serial numbers, MAC
 addresses and network identifiers are automatically redacted. Review the file
 before sharing it publicly.
 
+### Problem history
+
+Connection interruptions and completely failed updates are stored persistently,
+so the counters survive Home Assistant restarts. An interruption is counted
+only when the modem changes from reachable to unreachable. A failed update is
+counted when all modem API endpoints fail; an isolated endpoint failure remains
+visible in API diagnostics but does not increase this counter. The last modem
+restart is estimated from the uptime reported by the modem.
+
 ### Notes
 
 - Uses an undocumented Ziggo modem API.
@@ -149,6 +177,8 @@ geen SmartWifi Web of externe Ziggo-website.
 - Modemstatus en uptime
 - Modemmodel, firmware, hardware, serienummer en MAC-adres in apparaatinfo
 - Downloadbare Home Assistant-diagnostiek met privacyfilter
+- Instelbare DOCSIS-signaalgrenzen
+- Blijvende geschiedenis van onderbrekingen en mislukte updates
 - Downstream signaalanalyse (power, SNR, fouten)
 - Upstream monitoring (power, timeouts)
 - SC-QAM en OFDM foutanalyse
@@ -191,6 +221,21 @@ De integratie vereist directe lokale toegang tot de modeminterface/API. Het
 lokale modem-IP moet bereikbaar zijn vanaf Home Assistant. SmartWifi Web of
 cloud-login wordt niet gebruikt.
 
+### Opties
+
+Open **Instellingen > Apparaten & diensten > Ziggo Modem > Configureren** om de
+volgende grenzen aan te passen:
+
+- Minimale downstream power (standaard: `-10 dBmV`)
+- Maximale downstream power (standaard: `10 dBmV`)
+- Minimale downstream SNR (standaard: `34 dB`)
+- Maximale upstream power (standaard: `52 dBmV`)
+
+Deze grenzen worden gebruikt voor de signaalkwaliteit, storingsclassificatie en
+de kabelprobleemsensor. De standaardwaarden behouden het oorspronkelijke gedrag
+van de integratie. De kabelprobleemsensor gebruikt een extra veiligheidsmarge
+om niet op kleine schommelingen te reageren.
+
 ### Sensoren
 
 Algemeen:
@@ -203,6 +248,9 @@ Algemeen:
 - Lijnstabiliteit
 - API-status
 - Laatste succesvolle update
+- Verbindingsonderbrekingen
+- Mislukte updates
+- Laatste modemherstart
 - Storingsclassificatie
 
 Downstream:
@@ -250,6 +298,16 @@ bevat de integratie-instellingen, coordinatorstatus, endpointresultaten en de
 laatste modem-API-data. Wachtwoorden, gebruikersnamen, tokens, lokale
 IP-adressen, serienummers, MAC-adressen en netwerkidentificatie worden
 automatisch afgeschermd. Controleer het bestand voordat je het openbaar deelt.
+
+### Probleemgeschiedenis
+
+Verbindingsonderbrekingen en volledig mislukte updates worden blijvend
+opgeslagen, zodat de tellers een herstart van Home Assistant overleven. Een
+onderbreking telt alleen wanneer het modem van bereikbaar naar onbereikbaar
+gaat. Een mislukte update telt wanneer alle modem-API-endpoints falen; een fout
+van een los endpoint blijft zichtbaar in de API-diagnostiek maar verhoogt deze
+teller niet. De laatste modemherstart wordt geschat via de uptime die het modem
+rapporteert.
 
 ### Opmerkingen
 

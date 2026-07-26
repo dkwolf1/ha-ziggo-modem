@@ -31,6 +31,10 @@
           "username": "Gebruikersnaam (optioneel)",
           "password": "Wachtwoord",
           "scan_interval": "Polling interval (seconden)",
+          "downstream_power_min": "Minimale downstream power (dBmV)",
+          "downstream_power_max": "Maximale downstream power (dBmV)",
+          "downstream_snr_min": "Minimale downstream SNR (dB)",
+          "upstream_power_max": "Maximale upstream power (dBmV)",
           "verbose_diagnostics": "Uitgebreide diagnostiek",
           "language": "Taal van integratie"
         }

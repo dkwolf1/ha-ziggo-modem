@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 import time
 from typing import Any, Callable
@@ -13,7 +14,20 @@ from homeassistant.components.sensor import (
 from homeassistant.const import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CONF_HOST, DEFAULT_LANGUAGE, DOMAIN, LANGUAGE_NL
+from .const import (
+    CONF_DOWNSTREAM_POWER_MAX,
+    CONF_DOWNSTREAM_POWER_MIN,
+    CONF_DOWNSTREAM_SNR_MIN,
+    CONF_HOST,
+    CONF_UPSTREAM_POWER_MAX,
+    DEFAULT_DOWNSTREAM_POWER_MAX,
+    DEFAULT_DOWNSTREAM_POWER_MIN,
+    DEFAULT_DOWNSTREAM_SNR_MIN,
+    DEFAULT_LANGUAGE,
+    DEFAULT_UPSTREAM_POWER_MAX,
+    DOMAIN,
+    LANGUAGE_NL,
+)
 from .entity import ZiggoModemBaseEntity
 from .i18n import translate
 
@@ -143,7 +157,54 @@ def first_serviceflow_rate(data, direction):
     return None
 
 
-def evaluate_signal_quality(data, language=DEFAULT_LANGUAGE):
+def resolve_signal_thresholds(
+    thresholds: Mapping[str, float] | None = None,
+) -> dict[str, float]:
+    """Return configured thresholds with backward-compatible defaults."""
+    thresholds = thresholds or {}
+    return {
+        CONF_DOWNSTREAM_POWER_MIN: float(
+            thresholds.get(
+                CONF_DOWNSTREAM_POWER_MIN,
+                DEFAULT_DOWNSTREAM_POWER_MIN,
+            )
+        ),
+        CONF_DOWNSTREAM_POWER_MAX: float(
+            thresholds.get(
+                CONF_DOWNSTREAM_POWER_MAX,
+                DEFAULT_DOWNSTREAM_POWER_MAX,
+            )
+        ),
+        CONF_DOWNSTREAM_SNR_MIN: float(
+            thresholds.get(
+                CONF_DOWNSTREAM_SNR_MIN,
+                DEFAULT_DOWNSTREAM_SNR_MIN,
+            )
+        ),
+        CONF_UPSTREAM_POWER_MAX: float(
+            thresholds.get(
+                CONF_UPSTREAM_POWER_MAX,
+                DEFAULT_UPSTREAM_POWER_MAX,
+            )
+        ),
+    }
+
+
+def evaluate_signal_quality(
+    data,
+    language=DEFAULT_LANGUAGE,
+    thresholds: Mapping[str, float] | None = None,
+):
+    thresholds = resolve_signal_thresholds(thresholds)
+    downstream_power_min = thresholds[CONF_DOWNSTREAM_POWER_MIN]
+    downstream_power_max = thresholds[CONF_DOWNSTREAM_POWER_MAX]
+    downstream_snr_min = thresholds[CONF_DOWNSTREAM_SNR_MIN]
+    upstream_power_max = thresholds[CONF_UPSTREAM_POWER_MAX]
+    downstream_power_warning_margin = min(
+        2.0,
+        (downstream_power_max - downstream_power_min) * 0.2,
+    )
+
     ds_all = get_ds_channels(data)
     us_all = get_us_channels(data)
 
@@ -178,46 +239,49 @@ def evaluate_signal_quality(data, language=DEFAULT_LANGUAGE):
         )
 
     if ds_power is not None:
-        if ds_power < -10 or ds_power > 10:
+        if ds_power < downstream_power_min or ds_power > downstream_power_max:
             score -= 25
             reasons.append(
                 translate(language, "signal_quality.reason.downstream_power_high")
             )
-        elif ds_power < -8 or ds_power > 8:
+        elif (
+            ds_power < downstream_power_min + downstream_power_warning_margin
+            or ds_power > downstream_power_max - downstream_power_warning_margin
+        ):
             score -= 10
             reasons.append(
                 translate(language, "signal_quality.reason.downstream_power_warning")
             )
 
     if ds_snr is not None:
-        if ds_snr < 34:
+        if ds_snr < downstream_snr_min:
             score -= 40
             reasons.append(
                 translate(language, "signal_quality.reason.downstream_snr_bad")
             )
-        elif ds_snr < 37:
+        elif ds_snr < downstream_snr_min + 3:
             score -= 25
             reasons.append(
                 translate(language, "signal_quality.reason.downstream_snr_low")
             )
-        elif ds_snr < 40:
+        elif ds_snr < downstream_snr_min + 6:
             score -= 10
             reasons.append(
                 translate(language, "signal_quality.reason.downstream_snr_warning")
             )
 
     if us_power is not None:
-        if us_power > 52:
+        if us_power > upstream_power_max:
             score -= 35
             reasons.append(
                 translate(language, "signal_quality.reason.upstream_power_bad")
             )
-        elif us_power > 50:
+        elif us_power > upstream_power_max - 2:
             score -= 20
             reasons.append(
                 translate(language, "signal_quality.reason.upstream_power_high")
             )
-        elif us_power > 48:
+        elif us_power > upstream_power_max - 4:
             score -= 10
             reasons.append(
                 translate(language, "signal_quality.reason.upstream_power_warning")
@@ -289,11 +353,16 @@ def evaluate_signal_quality(data, language=DEFAULT_LANGUAGE):
         "scqam_uncorrected_errors_per_hour": scqam_uncorrected_rate,
         "t3_timeouts_total": t3_timeouts_total,
         "t3_timeouts_per_hour": t3_timeouts_rate,
+        "signal_thresholds": thresholds,
     }
 
 
-def evaluate_line_stability(data, language=DEFAULT_LANGUAGE):
-    quality = evaluate_signal_quality(data, language)
+def evaluate_line_stability(
+    data,
+    language=DEFAULT_LANGUAGE,
+    thresholds: Mapping[str, float] | None = None,
+):
+    quality = evaluate_signal_quality(data, language, thresholds)
 
     score = quality["score"]
     t3_rate = quality["t3_timeouts_per_hour"]
@@ -308,8 +377,13 @@ def evaluate_line_stability(data, language=DEFAULT_LANGUAGE):
     return translate(language, "line_stability.unstable")
 
 
-def classify_connection_issue(data, language=DEFAULT_LANGUAGE):
-    quality = evaluate_signal_quality(data, language)
+def classify_connection_issue(
+    data,
+    language=DEFAULT_LANGUAGE,
+    thresholds: Mapping[str, float] | None = None,
+):
+    thresholds = resolve_signal_thresholds(thresholds)
+    quality = evaluate_signal_quality(data, language, thresholds)
 
     ds_snr = quality["downstream_snr_min"]
     ds_power = quality["downstream_power_avg"]
@@ -330,19 +404,28 @@ def classify_connection_issue(data, language=DEFAULT_LANGUAGE):
     if ds_total and ds_locked < ds_total:
         return translate(language, "issue.channel")
 
-    if us_power is not None and us_power > 52:
+    if (
+        us_power is not None
+        and us_power > thresholds[CONF_UPSTREAM_POWER_MAX]
+    ):
         return translate(language, "issue.coax")
 
     if t3_rate > 10:
         return translate(language, "issue.coax")
 
-    if ds_snr is not None and ds_snr < 34:
+    if (
+        ds_snr is not None
+        and ds_snr < thresholds[CONF_DOWNSTREAM_SNR_MIN]
+    ):
         return translate(language, "issue.noise")
 
     if ofdm_rate > 5000:
         return translate(language, "issue.noise")
 
-    if ds_power is not None and (ds_power < -10 or ds_power > 10):
+    if ds_power is not None and (
+        ds_power < thresholds[CONF_DOWNSTREAM_POWER_MIN]
+        or ds_power > thresholds[CONF_DOWNSTREAM_POWER_MAX]
+    ):
         return translate(language, "issue.coax")
 
     if scqam_rate > 100:
@@ -351,16 +434,28 @@ def classify_connection_issue(data, language=DEFAULT_LANGUAGE):
     return translate(language, "issue.none")
 
 
-def signal_quality(data, language=DEFAULT_LANGUAGE):
-    return evaluate_signal_quality(data, language)["status"]
+def signal_quality(
+    data,
+    language=DEFAULT_LANGUAGE,
+    thresholds: Mapping[str, float] | None = None,
+):
+    return evaluate_signal_quality(data, language, thresholds)["status"]
 
 
-def signal_quality_explanation(data, language=DEFAULT_LANGUAGE):
-    return evaluate_signal_quality(data, language)["uitleg"]
+def signal_quality_explanation(
+    data,
+    language=DEFAULT_LANGUAGE,
+    thresholds: Mapping[str, float] | None = None,
+):
+    return evaluate_signal_quality(data, language, thresholds)["uitleg"]
 
 
-def signal_quality_advice(data, language=DEFAULT_LANGUAGE):
-    return evaluate_signal_quality(data, language)["advies"]
+def signal_quality_advice(
+    data,
+    language=DEFAULT_LANGUAGE,
+    thresholds: Mapping[str, float] | None = None,
+):
+    return evaluate_signal_quality(data, language, thresholds)["advies"]
 
 
 DELTA_RATE_SENSOR_KEYS = {
@@ -549,6 +644,27 @@ SENSORS = (
         value_fn=lambda d: None,
     ),
     ZiggoModemSensorDescription(
+        key="connection_interruptions",
+        name="Verbindingsonderbrekingen",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: None,
+    ),
+    ZiggoModemSensorDescription(
+        key="failed_updates",
+        name="Mislukte Updates",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: None,
+    ),
+    ZiggoModemSensorDescription(
+        key="last_modem_restart",
+        name="Laatste Modemherstart",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: None,
+    ),
+    ZiggoModemSensorDescription(
         key="line_stability",
         name="Lijnstabiliteit",
         value_fn=lambda d: evaluate_line_stability(d),
@@ -595,6 +711,15 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
             if self.entity_description.key == "last_successful_update":
                 return self.coordinator.last_successful_update
 
+            if self.entity_description.key == "connection_interruptions":
+                return self.coordinator.connection_interruptions
+
+            if self.entity_description.key == "failed_updates":
+                return self.coordinator.failed_updates
+
+            if self.entity_description.key == "last_modem_restart":
+                return self.coordinator.last_modem_restart
+
             if self.entity_description.key == "uptime":
                 uptime = self.coordinator.data.get("state", {}).get(
                     "cablemodem", {}
@@ -602,19 +727,39 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
                 return format_uptime(uptime, language)
 
             if self.entity_description.key == "signal_quality":
-                return signal_quality(self.coordinator.data, language)
+                return signal_quality(
+                    self.coordinator.data,
+                    language,
+                    self.coordinator.signal_thresholds,
+                )
 
             if self.entity_description.key == "signal_quality_explanation":
-                return signal_quality_explanation(self.coordinator.data, language)
+                return signal_quality_explanation(
+                    self.coordinator.data,
+                    language,
+                    self.coordinator.signal_thresholds,
+                )
 
             if self.entity_description.key == "signal_quality_advice":
-                return signal_quality_advice(self.coordinator.data, language)
+                return signal_quality_advice(
+                    self.coordinator.data,
+                    language,
+                    self.coordinator.signal_thresholds,
+                )
 
             if self.entity_description.key == "line_stability":
-                return evaluate_line_stability(self.coordinator.data, language)
+                return evaluate_line_stability(
+                    self.coordinator.data,
+                    language,
+                    self.coordinator.signal_thresholds,
+                )
 
             if self.entity_description.key == "issue_classification":
-                return classify_connection_issue(self.coordinator.data, language)
+                return classify_connection_issue(
+                    self.coordinator.data,
+                    language,
+                    self.coordinator.signal_thresholds,
+                )
 
             value = self.entity_description.value_fn(self.coordinator.data)
 
@@ -675,11 +820,27 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
                 "paused": self.coordinator.is_paused,
                 "verbose_diagnostics": self.coordinator.verbose_diagnostics,
                 "language": self.coordinator.language,
+                "signal_thresholds": self.coordinator.signal_thresholds,
+                "problem_history": self.coordinator.problem_history,
                 "endpoint_status": endpoint_status,
                 "failed_endpoints": [
                     endpoint
                     for endpoint, status in endpoint_status.items()
                     if status == "failed"
+                ],
+            }
+
+        if self.entity_description.key == "connection_interruptions":
+            history = self.coordinator.problem_history
+            return {
+                "last_interruption": history["last_connection_interruption"],
+                "last_recovery": history["last_connection_recovery"],
+            }
+
+        if self.entity_description.key == "failed_updates":
+            return {
+                "last_failed_update": self.coordinator.problem_history[
+                    "last_failed_update"
                 ],
             }
 
@@ -690,6 +851,7 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
             quality = evaluate_signal_quality(
                 self.coordinator.data,
                 self.coordinator.language,
+                self.coordinator.signal_thresholds,
             )
         except Exception:
             return None
@@ -728,6 +890,7 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
             ],
             "t3_timeouts_total": quality["t3_timeouts_total"],
             "t3_timeouts_per_hour": quality["t3_timeouts_per_hour"],
+            "signal_thresholds": quality["signal_thresholds"],
         }
 
         if self.coordinator.verbose_diagnostics:

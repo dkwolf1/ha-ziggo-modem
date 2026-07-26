@@ -81,6 +81,8 @@ async def async_get_config_entry_diagnostics(
             "paused": coordinator.is_paused,
             "verbose_diagnostics": coordinator.verbose_diagnostics,
             "language": coordinator.language,
+            "signal_thresholds": coordinator.signal_thresholds,
+            "problem_history": coordinator.problem_history,
         }
     )
     diagnostics["modem_data"] = async_redact_data(
