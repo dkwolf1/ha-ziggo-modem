@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -11,7 +12,18 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.const import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CONF_HOST, DOMAIN
+from .const import (
+    CONF_DOWNSTREAM_POWER_MAX,
+    CONF_DOWNSTREAM_POWER_MIN,
+    CONF_DOWNSTREAM_SNR_MIN,
+    CONF_HOST,
+    CONF_UPSTREAM_POWER_MAX,
+    DEFAULT_DOWNSTREAM_POWER_MAX,
+    DEFAULT_DOWNSTREAM_POWER_MIN,
+    DEFAULT_DOWNSTREAM_SNR_MIN,
+    DEFAULT_UPSTREAM_POWER_MAX,
+    DOMAIN,
+)
 from .entity import ZiggoModemBaseEntity
 
 
@@ -84,8 +96,36 @@ def internet_outage(data) -> bool:
     return normalize_access_allowed(value) is False
 
 
-def has_cable_issue(data):
+def has_cable_issue(
+    data,
+    thresholds: Mapping[str, float] | None = None,
+):
     """Return True only for real DOCSIS signal problems (not minor fluctuations)."""
+    thresholds = thresholds or {}
+    downstream_power_min = float(
+        thresholds.get(
+            CONF_DOWNSTREAM_POWER_MIN,
+            DEFAULT_DOWNSTREAM_POWER_MIN,
+        )
+    )
+    downstream_power_max = float(
+        thresholds.get(
+            CONF_DOWNSTREAM_POWER_MAX,
+            DEFAULT_DOWNSTREAM_POWER_MAX,
+        )
+    )
+    downstream_snr_min = float(
+        thresholds.get(
+            CONF_DOWNSTREAM_SNR_MIN,
+            DEFAULT_DOWNSTREAM_SNR_MIN,
+        )
+    )
+    upstream_power_max = float(
+        thresholds.get(
+            CONF_UPSTREAM_POWER_MAX,
+            DEFAULT_UPSTREAM_POWER_MAX,
+        )
+    )
 
     ds_all = get_ds_channels(data)
     us_all = get_us_channels(data)
@@ -120,15 +160,18 @@ def has_cable_issue(data):
         return True
 
     # Bad SNR is a real problem.
-    if ds_snr is not None and ds_snr < 33:
+    if ds_snr is not None and ds_snr < downstream_snr_min - 1:
         return True
 
-    # Extreme power afwijking
-    if ds_power is not None and (ds_power < -12 or ds_power > 12):
+    # Keep a safety margin beyond the configured quality range.
+    if ds_power is not None and (
+        ds_power < downstream_power_min - 2
+        or ds_power > downstream_power_max + 2
+    ):
         return True
 
     # High upstream power means the modem has to transmit too hard.
-    if us_power is not None and us_power > 52:
+    if us_power is not None and us_power > upstream_power_max:
         return True
 
     # T4 timeouts always indicate a problem.
@@ -214,6 +257,11 @@ class ZiggoModemBinarySensor(ZiggoModemBaseEntity, BinarySensorEntity):
     @property
     def is_on(self):
         try:
+            if self.entity_description.key == "cable_issue":
+                return has_cable_issue(
+                    self.coordinator.data,
+                    self.coordinator.signal_thresholds,
+                )
             return self.entity_description.value_fn(self.coordinator.data)
         except Exception:
             return False

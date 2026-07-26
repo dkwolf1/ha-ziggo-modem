@@ -31,6 +31,10 @@
           "username": "Username (optional)",
           "password": "Password",
           "scan_interval": "Polling interval (seconds)",
+          "downstream_power_min": "Minimum downstream power (dBmV)",
+          "downstream_power_max": "Maximum downstream power (dBmV)",
+          "downstream_snr_min": "Minimum downstream SNR (dB)",
+          "upstream_power_max": "Maximum upstream power (dBmV)",
           "verbose_diagnostics": "Verbose diagnostics",
           "language": "Integration language"
         }

@@ -8,15 +8,23 @@ from homeassistant.data_entry_flow import FlowResult
 
 from .api import ZiggoModemApi, ZiggoModemApiError, ZiggoModemAuthError
 from .const import (
+    CONF_DOWNSTREAM_POWER_MAX,
+    CONF_DOWNSTREAM_POWER_MIN,
+    CONF_DOWNSTREAM_SNR_MIN,
     CONF_HOST,
     CONF_LANGUAGE,
     CONF_PASSWORD,
     CONF_SCAN_INTERVAL,
+    CONF_UPSTREAM_POWER_MAX,
     CONF_USERNAME,
     CONF_VERBOSE_DIAGNOSTICS,
+    DEFAULT_DOWNSTREAM_POWER_MAX,
+    DEFAULT_DOWNSTREAM_POWER_MIN,
+    DEFAULT_DOWNSTREAM_SNR_MIN,
     DEFAULT_HOST,
     DEFAULT_LANGUAGE,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_UPSTREAM_POWER_MAX,
     DEFAULT_VERBOSE_DIAGNOSTICS,
     DOMAIN,
     LANGUAGE_EN,
@@ -66,6 +74,10 @@ class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data=user_input,
                     options={
                         CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
+                        CONF_DOWNSTREAM_POWER_MIN: DEFAULT_DOWNSTREAM_POWER_MIN,
+                        CONF_DOWNSTREAM_POWER_MAX: DEFAULT_DOWNSTREAM_POWER_MAX,
+                        CONF_DOWNSTREAM_SNR_MIN: DEFAULT_DOWNSTREAM_SNR_MIN,
+                        CONF_UPSTREAM_POWER_MAX: DEFAULT_UPSTREAM_POWER_MAX,
                         CONF_VERBOSE_DIAGNOSTICS: DEFAULT_VERBOSE_DIAGNOSTICS,
                         CONF_LANGUAGE: language,
                     },
@@ -123,6 +135,22 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlow):
             CONF_LANGUAGE,
             DEFAULT_LANGUAGE,
         )
+        current_downstream_power_min = self.config_entry.options.get(
+            CONF_DOWNSTREAM_POWER_MIN,
+            DEFAULT_DOWNSTREAM_POWER_MIN,
+        )
+        current_downstream_power_max = self.config_entry.options.get(
+            CONF_DOWNSTREAM_POWER_MAX,
+            DEFAULT_DOWNSTREAM_POWER_MAX,
+        )
+        current_downstream_snr_min = self.config_entry.options.get(
+            CONF_DOWNSTREAM_SNR_MIN,
+            DEFAULT_DOWNSTREAM_SNR_MIN,
+        )
+        current_upstream_power_max = self.config_entry.options.get(
+            CONF_UPSTREAM_POWER_MAX,
+            DEFAULT_UPSTREAM_POWER_MAX,
+        )
 
         if user_input is not None:
             host = user_input[CONF_HOST]
@@ -161,6 +189,18 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlow):
                         CONF_USERNAME: username,
                         CONF_PASSWORD: password,
                         CONF_SCAN_INTERVAL: user_input[CONF_SCAN_INTERVAL],
+                        CONF_DOWNSTREAM_POWER_MIN: user_input[
+                            CONF_DOWNSTREAM_POWER_MIN
+                        ],
+                        CONF_DOWNSTREAM_POWER_MAX: user_input[
+                            CONF_DOWNSTREAM_POWER_MAX
+                        ],
+                        CONF_DOWNSTREAM_SNR_MIN: user_input[
+                            CONF_DOWNSTREAM_SNR_MIN
+                        ],
+                        CONF_UPSTREAM_POWER_MAX: user_input[
+                            CONF_UPSTREAM_POWER_MAX
+                        ],
                         CONF_VERBOSE_DIAGNOSTICS: user_input[
                             CONF_VERBOSE_DIAGNOSTICS
                         ],
@@ -179,6 +219,34 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlow):
                         CONF_SCAN_INTERVAL,
                         default=current_scan_interval,
                     ): vol.All(vol.Coerce(int), vol.Range(min=5, max=3600)),
+                    vol.Required(
+                        CONF_DOWNSTREAM_POWER_MIN,
+                        default=current_downstream_power_min,
+                    ): vol.All(
+                        vol.Coerce(float),
+                        vol.Range(min=-30, max=-0.1),
+                    ),
+                    vol.Required(
+                        CONF_DOWNSTREAM_POWER_MAX,
+                        default=current_downstream_power_max,
+                    ): vol.All(
+                        vol.Coerce(float),
+                        vol.Range(min=0.1, max=30),
+                    ),
+                    vol.Required(
+                        CONF_DOWNSTREAM_SNR_MIN,
+                        default=current_downstream_snr_min,
+                    ): vol.All(
+                        vol.Coerce(float),
+                        vol.Range(min=20, max=50),
+                    ),
+                    vol.Required(
+                        CONF_UPSTREAM_POWER_MAX,
+                        default=current_upstream_power_max,
+                    ): vol.All(
+                        vol.Coerce(float),
+                        vol.Range(min=30, max=65),
+                    ),
                     vol.Required(
                         CONF_VERBOSE_DIAGNOSTICS,
                         default=current_verbose_diagnostics,
