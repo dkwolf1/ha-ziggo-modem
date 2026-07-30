@@ -10,6 +10,14 @@
           "password": "Password",
           "language": "Integration language"
         }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate Ziggo Modem",
+        "description": "Authentication failed for the modem at {host}. Enter the current modem credentials.",
+        "data": {
+          "username": "Username (optional)",
+          "password": "Password"
+        }
       }
     },
     "error": {
@@ -18,7 +26,8 @@
       "unknown": "Unknown error"
     },
     "abort": {
-      "already_configured": "Modem is already configured"
+      "already_configured": "Modem is already configured",
+      "reauth_successful": "Authentication was updated successfully"
     }
   },
   "options": {

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import time
 from collections.abc import Mapping
 from dataclasses import dataclass
-import time
 from typing import Any, Callable
 
 from homeassistant.components.sensor import (
@@ -26,11 +26,15 @@ from .const import (
     DEFAULT_LANGUAGE,
     DEFAULT_UPSTREAM_POWER_MAX,
     DOMAIN,
+    ENDPOINT_DOWNSTREAM,
+    ENDPOINT_SERVICEFLOWS,
+    ENDPOINT_SOFTWAREUPDATE,
+    ENDPOINT_STATE,
+    ENDPOINT_UPSTREAM,
     LANGUAGE_NL,
 )
 from .entity import ZiggoModemBaseEntity
 from .i18n import translate
-
 
 # =========================
 # Helpers
@@ -464,6 +468,19 @@ DELTA_RATE_SENSOR_KEYS = {
     "t3_timeouts_delta_rate",
 }
 
+STATE_ENDPOINTS = frozenset({ENDPOINT_STATE})
+DOWNSTREAM_ENDPOINTS = frozenset({ENDPOINT_DOWNSTREAM})
+UPSTREAM_ENDPOINTS = frozenset({ENDPOINT_UPSTREAM})
+SERVICEFLOW_ENDPOINTS = frozenset({ENDPOINT_SERVICEFLOWS})
+SOFTWARE_ENDPOINTS = frozenset({ENDPOINT_SOFTWAREUPDATE})
+SIGNAL_ENDPOINTS = frozenset(
+    {
+        ENDPOINT_STATE,
+        ENDPOINT_DOWNSTREAM,
+        ENDPOINT_UPSTREAM,
+    }
+)
+
 
 # =========================
 # Sensor definitions
@@ -473,17 +490,20 @@ DELTA_RATE_SENSOR_KEYS = {
 @dataclass(frozen=True, kw_only=True)
 class ZiggoModemSensorDescription(SensorEntityDescription):
     value_fn: Callable[[dict[str, Any]], Any]
+    required_endpoints: frozenset[str] = frozenset()
 
 
 SENSORS = (
     ZiggoModemSensorDescription(
         key="status",
         name="Modem Status",
+        required_endpoints=STATE_ENDPOINTS,
         value_fn=lambda d: d["state"]["cablemodem"]["status"],
     ),
     ZiggoModemSensorDescription(
         key="uptime",
         name="Uptime",
+        required_endpoints=STATE_ENDPOINTS,
         value_fn=lambda d: format_uptime(
             d.get("state", {}).get("cablemodem", {}).get("upTime")
         ),
@@ -491,56 +511,66 @@ SENSORS = (
     ZiggoModemSensorDescription(
         key="signal_quality",
         name="Signaalkwaliteit",
+        required_endpoints=SIGNAL_ENDPOINTS,
         value_fn=lambda d: signal_quality(d),
     ),
     ZiggoModemSensorDescription(
         key="signal_quality_explanation",
         name="Signaalkwaliteit Uitleg",
+        required_endpoints=SIGNAL_ENDPOINTS,
         value_fn=lambda d: signal_quality_explanation(d),
     ),
     ZiggoModemSensorDescription(
         key="signal_quality_advice",
         name="Signaalkwaliteit Advies",
+        required_endpoints=SIGNAL_ENDPOINTS,
         value_fn=lambda d: signal_quality_advice(d),
     ),
     ZiggoModemSensorDescription(
         key="software",
         name="Software Status",
         entity_category=EntityCategory.DIAGNOSTIC,
+        required_endpoints=SOFTWARE_ENDPOINTS,
         value_fn=lambda d: d["softwareupdate"]["softwareUpdate"]["status"],
     ),
     ZiggoModemSensorDescription(
         key="ds_channels",
         name="Downstream Kanalen",
+        required_endpoints=DOWNSTREAM_ENDPOINTS,
         value_fn=lambda d: len(get_ds_channels(d)),
     ),
     ZiggoModemSensorDescription(
         key="ds_locked",
         name="Downstream Gelocked",
+        required_endpoints=DOWNSTREAM_ENDPOINTS,
         value_fn=lambda d: locked(get_ds_channels(d)),
     ),
     ZiggoModemSensorDescription(
         key="ds_power",
         name="Downstream Power",
         native_unit_of_measurement="dBmV",
+        required_endpoints=DOWNSTREAM_ENDPOINTS,
         value_fn=lambda d: avg(scqam_ds(get_ds_channels(d)), "power"),
     ),
     ZiggoModemSensorDescription(
         key="ds_snr",
         name="Downstream SNR",
         native_unit_of_measurement="dB",
+        required_endpoints=DOWNSTREAM_ENDPOINTS,
         value_fn=lambda d: minv(scqam_ds(get_ds_channels(d)), "snr"),
     ),
     ZiggoModemSensorDescription(
         key="ds_uncorrected_scqam",
         name="DS Errors SC-QAM",
         entity_category=EntityCategory.DIAGNOSTIC,
+        required_endpoints=DOWNSTREAM_ENDPOINTS,
         value_fn=lambda d: sumv(scqam_ds(get_ds_channels(d)), "uncorrectedErrors"),
     ),
     ZiggoModemSensorDescription(
         key="ds_uncorrected_ofdm",
         name="DS Errors OFDM",
         entity_category=EntityCategory.DIAGNOSTIC,
+        required_endpoints=DOWNSTREAM_ENDPOINTS,
         value_fn=lambda d: sumv(ofdm_ds(get_ds_channels(d)), "uncorrectedErrors"),
     ),
     ZiggoModemSensorDescription(
@@ -550,6 +580,7 @@ SENSORS = (
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
+        required_endpoints=SIGNAL_ENDPOINTS,
         value_fn=lambda d: evaluate_signal_quality(d)[
             "ofdm_uncorrected_errors_per_hour"
         ],
@@ -561,6 +592,7 @@ SENSORS = (
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
+        required_endpoints=SIGNAL_ENDPOINTS,
         value_fn=lambda d: evaluate_signal_quality(d)[
             "scqam_uncorrected_errors_per_hour"
         ],
@@ -572,6 +604,7 @@ SENSORS = (
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
+        required_endpoints=SIGNAL_ENDPOINTS,
         value_fn=lambda d: evaluate_signal_quality(d)["t3_timeouts_per_hour"],
     ),
     ZiggoModemSensorDescription(
@@ -581,6 +614,7 @@ SENSORS = (
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
+        required_endpoints=DOWNSTREAM_ENDPOINTS,
         value_fn=lambda d: sumv(ofdm_ds(get_ds_channels(d)), "uncorrectedErrors"),
     ),
     ZiggoModemSensorDescription(
@@ -590,6 +624,7 @@ SENSORS = (
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
+        required_endpoints=DOWNSTREAM_ENDPOINTS,
         value_fn=lambda d: sumv(scqam_ds(get_ds_channels(d)), "uncorrectedErrors"),
     ),
     ZiggoModemSensorDescription(
@@ -599,35 +634,41 @@ SENSORS = (
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
+        required_endpoints=UPSTREAM_ENDPOINTS,
         value_fn=lambda d: sumv(get_us_channels(d), "t3Timeout"),
     ),
     ZiggoModemSensorDescription(
         key="us_channels",
         name="Upstream Kanalen",
+        required_endpoints=UPSTREAM_ENDPOINTS,
         value_fn=lambda d: len(get_us_channels(d)),
     ),
     ZiggoModemSensorDescription(
         key="us_power",
         name="Upstream Power",
         native_unit_of_measurement="dBmV",
+        required_endpoints=UPSTREAM_ENDPOINTS,
         value_fn=lambda d: avg(scqam_us(get_us_channels(d)), "power"),
     ),
     ZiggoModemSensorDescription(
         key="us_t3",
         name="Upstream T3 Timeouts",
         entity_category=EntityCategory.DIAGNOSTIC,
+        required_endpoints=UPSTREAM_ENDPOINTS,
         value_fn=lambda d: sumv(get_us_channels(d), "t3Timeout"),
     ),
     ZiggoModemSensorDescription(
         key="ds_rate",
         name="Download Profiel",
         native_unit_of_measurement="Mbit/s",
+        required_endpoints=SERVICEFLOW_ENDPOINTS,
         value_fn=lambda d: mbit(first_serviceflow_rate(d, "downstream")),
     ),
     ZiggoModemSensorDescription(
         key="us_rate",
         name="Upload Profiel",
         native_unit_of_measurement="Mbit/s",
+        required_endpoints=SERVICEFLOW_ENDPOINTS,
         value_fn=lambda d: mbit(first_serviceflow_rate(d, "upstream")),
     ),
     ZiggoModemSensorDescription(
@@ -667,12 +708,14 @@ SENSORS = (
     ZiggoModemSensorDescription(
         key="line_stability",
         name="Lijnstabiliteit",
+        required_endpoints=SIGNAL_ENDPOINTS,
         value_fn=lambda d: evaluate_line_stability(d),
     ),
     ZiggoModemSensorDescription(
         key="issue_classification",
         name="Storingsclassificatie",
         entity_category=EntityCategory.DIAGNOSTIC,
+        required_endpoints=SIGNAL_ENDPOINTS,
         value_fn=lambda d: classify_connection_issue(d),
     ),
 )

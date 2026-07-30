@@ -23,6 +23,9 @@ from .const import (
     DEFAULT_DOWNSTREAM_SNR_MIN,
     DEFAULT_UPSTREAM_POWER_MAX,
     DOMAIN,
+    ENDPOINT_DOWNSTREAM,
+    ENDPOINT_STATE,
+    ENDPOINT_UPSTREAM,
 )
 from .entity import ZiggoModemBaseEntity
 
@@ -200,6 +203,7 @@ def has_cable_issue(
 @dataclass(frozen=True, kw_only=True)
 class ZiggoModemBinarySensorDescription(BinarySensorEntityDescription):
     value_fn: Callable[[dict], bool]
+    required_endpoints: frozenset[str] = frozenset()
 
 
 BINARY_SENSORS = (
@@ -207,6 +211,7 @@ BINARY_SENSORS = (
         key="internet_access",
         name="Internettoegang",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        required_endpoints=frozenset({ENDPOINT_STATE}),
         value_fn=lambda d: internet_access_allowed(d),
     ),
     ZiggoModemBinarySensorDescription(
@@ -214,6 +219,13 @@ BINARY_SENSORS = (
         name="Kabelprobleem",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
+        required_endpoints=frozenset(
+            {
+                ENDPOINT_STATE,
+                ENDPOINT_DOWNSTREAM,
+                ENDPOINT_UPSTREAM,
+            }
+        ),
         value_fn=lambda d: has_cable_issue(d),
     ),
     ZiggoModemBinarySensorDescription(
@@ -221,6 +233,7 @@ BINARY_SENSORS = (
         name="Internet Storing",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
+        required_endpoints=frozenset({ENDPOINT_STATE}),
         value_fn=lambda d: internet_outage(d),
     ),
     ZiggoModemBinarySensorDescription(
@@ -228,6 +241,7 @@ BINARY_SENSORS = (
         name="Upstream Timeouts Aanwezig",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
+        required_endpoints=frozenset({ENDPOINT_UPSTREAM}),
         value_fn=lambda d: sumv(get_us_channels(d), "t4Timeout") > 0
         or sumv(get_us_channels(d), "t3Timeout") > 5
     ),

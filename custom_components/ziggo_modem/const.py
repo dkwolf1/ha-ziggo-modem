@@ -26,6 +26,13 @@ LANGUAGE_EN = "en"
 LANGUAGE_NL = "nl"
 LANGUAGE_OPTIONS = [LANGUAGE_NL, LANGUAGE_EN]
 
+ENDPOINT_STATE = "state"
+ENDPOINT_DOWNSTREAM = "downstream"
+ENDPOINT_PRIMARY_DOWNSTREAM = "primary_downstream"
+ENDPOINT_UPSTREAM = "upstream"
+ENDPOINT_SERVICEFLOWS = "serviceflows"
+ENDPOINT_SOFTWAREUPDATE = "softwareupdate"
+
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
     Platform.BUTTON,
