@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-import voluptuous as vol
+from collections.abc import Mapping
+from typing import Any
 
+import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers import selector
 
 from .api import ZiggoModemApi, ZiggoModemApiError, ZiggoModemAuthError
 from .const import (
@@ -97,6 +100,85 @@ class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 }
             ),
             errors=errors,
+        )
+
+    async def async_step_reauth(
+        self,
+        entry_data: Mapping[str, Any],
+    ) -> FlowResult:
+        """Start reauthentication for an existing config entry."""
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ) -> FlowResult:
+        """Validate and store replacement modem credentials."""
+        entry = self._get_reauth_entry()
+        host = entry.options.get(
+            CONF_HOST,
+            entry.data.get(CONF_HOST, DEFAULT_HOST),
+        )
+        current_username = entry.options.get(
+            CONF_USERNAME,
+            entry.data.get(CONF_USERNAME, ""),
+        )
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            username = user_input.get(CONF_USERNAME, "")
+            password = user_input[CONF_PASSWORD]
+            api = ZiggoModemApi(host, username, password)
+
+            try:
+                await api.async_initialize()
+                await api.async_login()
+            except ZiggoModemAuthError:
+                errors["base"] = "invalid_auth"
+            except ZiggoModemApiError:
+                errors["base"] = "cannot_connect"
+            except Exception:
+                errors["base"] = "unknown"
+            finally:
+                await api.async_close()
+
+            if not errors:
+                await self.async_set_unique_id(entry.unique_id or host)
+                self._abort_if_unique_id_mismatch()
+
+                credential_updates = {
+                    CONF_USERNAME: username,
+                    CONF_PASSWORD: password,
+                }
+                self.hass.config_entries.async_update_entry(
+                    entry,
+                    options={
+                        **entry.options,
+                        **credential_updates,
+                    },
+                )
+                return self.async_update_reload_and_abort(
+                    entry,
+                    data_updates=credential_updates,
+                )
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_USERNAME,
+                        default=current_username,
+                    ): str,
+                    vol.Required(CONF_PASSWORD): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.PASSWORD,
+                        )
+                    ),
+                }
+            ),
+            errors=errors,
+            description_placeholders={"host": host},
         )
 
     @staticmethod

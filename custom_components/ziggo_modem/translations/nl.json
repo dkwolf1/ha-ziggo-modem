@@ -10,6 +10,14 @@
           "password": "Wachtwoord",
           "language": "Taal van integratie"
         }
+      },
+      "reauth_confirm": {
+        "title": "Ziggo Modem opnieuw authenticeren",
+        "description": "Authenticatie bij het modem op {host} is mislukt. Voer de actuele inloggegevens van het modem in.",
+        "data": {
+          "username": "Gebruikersnaam (optioneel)",
+          "password": "Wachtwoord"
+        }
       }
     },
     "error": {
@@ -18,7 +26,8 @@
       "unknown": "Onbekende fout"
     },
     "abort": {
-      "already_configured": "Modem is al toegevoegd"
+      "already_configured": "Modem is al toegevoegd",
+      "reauth_successful": "De authenticatie is bijgewerkt"
     }
   },
   "options": {

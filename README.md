@@ -28,6 +28,8 @@ does not use SmartWifi Web or any external Ziggo website.
 - Downloadable, privacy-redacted Home Assistant diagnostics
 - Configurable DOCSIS signal thresholds
 - Persistent connection interruption and failed update history
+- Automatic reauthentication when modem credentials change
+- Per-sensor availability when an individual API endpoint fails
 - Downstream signal analysis (power, SNR, errors)
 - Upstream monitoring (power, timeouts)
 - SC-QAM and OFDM error analysis
@@ -83,6 +85,10 @@ These thresholds affect signal quality, issue classification and the cable
 issue sensor. The defaults preserve the original integration behavior. The
 cable issue sensor keeps an additional safety margin to avoid triggering on
 minor fluctuations.
+
+If the modem password changes, Home Assistant displays a reauthentication
+prompt. Enter the current modem credentials there; removing and adding the
+integration again is not required.
 
 ### Sensors
 
@@ -146,6 +152,10 @@ API data. Passwords, usernames, tokens, local IP addresses, serial numbers, MAC
 addresses and network identifiers are automatically redacted. Review the file
 before sharing it publicly.
 
+If an individual modem API endpoint fails, only entities that depend on that
+endpoint become unavailable. Other modem entities continue updating. API status
+and problem-history sensors remain available for troubleshooting.
+
 ### Problem history
 
 Connection interruptions and completely failed updates are stored persistently,
@@ -179,6 +189,8 @@ geen SmartWifi Web of externe Ziggo-website.
 - Downloadbare Home Assistant-diagnostiek met privacyfilter
 - Instelbare DOCSIS-signaalgrenzen
 - Blijvende geschiedenis van onderbrekingen en mislukte updates
+- Automatische herauthenticatie wanneer modeminloggegevens wijzigen
+- Beschikbaarheid per sensor wanneer een los API-endpoint faalt
 - Downstream signaalanalyse (power, SNR, fouten)
 - Upstream monitoring (power, timeouts)
 - SC-QAM en OFDM foutanalyse
@@ -235,6 +247,10 @@ Deze grenzen worden gebruikt voor de signaalkwaliteit, storingsclassificatie en
 de kabelprobleemsensor. De standaardwaarden behouden het oorspronkelijke gedrag
 van de integratie. De kabelprobleemsensor gebruikt een extra veiligheidsmarge
 om niet op kleine schommelingen te reageren.
+
+Wanneer het modemwachtwoord verandert, toont Home Assistant een melding om
+opnieuw te authenticeren. Voer daar de actuele modeminloggegevens in; de
+integratie verwijderen en opnieuw toevoegen is niet nodig.
 
 ### Sensoren
 
@@ -298,6 +314,11 @@ bevat de integratie-instellingen, coordinatorstatus, endpointresultaten en de
 laatste modem-API-data. Wachtwoorden, gebruikersnamen, tokens, lokale
 IP-adressen, serienummers, MAC-adressen en netwerkidentificatie worden
 automatisch afgeschermd. Controleer het bestand voordat je het openbaar deelt.
+
+Wanneer een afzonderlijk modem-API-endpoint faalt, worden alleen de entiteiten
+die dat endpoint nodig hebben onbeschikbaar. Andere modementiteiten blijven
+bijwerken. De API-status en sensoren voor probleemgeschiedenis blijven
+beschikbaar voor probleemonderzoek.
 
 ### Probleemgeschiedenis
 

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
 import logging
+from collections.abc import Collection
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -103,6 +105,12 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def endpoint_status(self) -> dict[str, str]:
         """Return the status of the most recent endpoint fetch."""
         return self._endpoint_status
+
+    def endpoints_available(self, endpoints: Collection[str]) -> bool:
+        """Return whether all required endpoints succeeded."""
+        return all(
+            self._endpoint_status.get(endpoint) == "ok" for endpoint in endpoints
+        )
 
     @property
     def signal_thresholds(self) -> dict[str, float]:
@@ -241,7 +249,9 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         except ZiggoModemAuthError as err:
             await self._async_record_failed_update(connection_unavailable=False)
-            raise UpdateFailed(f"Authentication failed: {err}") from err
+            raise ConfigEntryAuthFailed(
+                f"Authentication failed for Ziggo modem at {self.api.host}"
+            ) from err
 
         except ZiggoModemApiError as err:
             self._consecutive_failures += 1

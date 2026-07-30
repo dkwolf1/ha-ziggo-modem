@@ -49,6 +49,15 @@ class ZiggoModemBaseEntity(CoordinatorEntity[ZiggoModemDataUpdateCoordinator]):
         return getattr(self, "_attr_name", None)
 
     @property
+    def available(self) -> bool:
+        """Return whether the coordinator and required endpoints are available."""
+        description = getattr(self, "entity_description", None)
+        required_endpoints = getattr(description, "required_endpoints", frozenset())
+        return super().available and self.coordinator.endpoints_available(
+            required_endpoints
+        )
+
+    @property
     def device_info(self) -> DeviceInfo:
         """Return device info for the Ziggo modem."""
         data = self.coordinator.data or {}

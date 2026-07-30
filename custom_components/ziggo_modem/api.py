@@ -260,15 +260,22 @@ class ZiggoModemApi:
 
         data: dict[str, Any] = {}
         endpoint_status: dict[str, str] = {}
+        auth_error: ZiggoModemAuthError | None = None
 
         for key, result in zip(keys, results):
             if isinstance(result, Exception):
                 _LOGGER.debug("Endpoint %s failed: %s", key, result)
                 data[key] = {}
                 endpoint_status[key] = "failed"
+                if isinstance(result, ZiggoModemAuthError):
+                    auth_error = result
             else:
                 data[key] = result
                 endpoint_status[key] = "ok"
 
         self._last_endpoint_status = endpoint_status
+
+        if auth_error is not None:
+            raise auth_error
+
         return data
