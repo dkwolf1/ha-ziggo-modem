@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from .const import DEFAULT_LANGUAGE, LANGUAGE_EN, LANGUAGE_NL, LANGUAGE_OPTIONS
 
-
 TRANSLATIONS = {
     LANGUAGE_NL: {
         "language.nl": "Nederlands",
@@ -118,6 +117,19 @@ TRANSLATIONS = {
         "sensor.issue_classification.name": "Storingsclassificatie",
         "binary_sensor.internet_access.name": "Internettoegang",
         "binary_sensor.cable_issue.name": "Kabelprobleem",
+        "cable_issue.reason.downstream_channels_unlocked": (
+            "Niet alle downstreamkanalen zijn gelockt"
+        ),
+        "cable_issue.reason.downstream_snr_low": "Downstream SNR is te laag",
+        "cable_issue.reason.downstream_power_out_of_range": (
+            "Downstream power valt buiten de veilige marges"
+        ),
+        "cable_issue.reason.upstream_power_high": "Upstream power is te hoog",
+        "cable_issue.reason.t4_timeouts_detected": "T4-timeouts gedetecteerd",
+        "cable_issue.reason.ofdm_error_rate_high": (
+            "Veel OFDM uncorrected errors per uur"
+        ),
+        "cable_issue.reason.t3_timeout_rate_high": "Veel T3-timeouts per uur",
         "binary_sensor.internet_outage.name": "Internet Storing",
         "binary_sensor.upstream_timeouts.name": "Upstream Timeouts Aanwezig",
         "button.release_session.name": "Sessie Vrijgeven",
@@ -236,6 +248,19 @@ TRANSLATIONS = {
         "sensor.issue_classification.name": "Issue Classification",
         "binary_sensor.internet_access.name": "Internet Access",
         "binary_sensor.cable_issue.name": "Cable Issue",
+        "cable_issue.reason.downstream_channels_unlocked": (
+            "Not all downstream channels are locked"
+        ),
+        "cable_issue.reason.downstream_snr_low": "Downstream SNR is too low",
+        "cable_issue.reason.downstream_power_out_of_range": (
+            "Downstream power is outside the safe margins"
+        ),
+        "cable_issue.reason.upstream_power_high": "Upstream power is too high",
+        "cable_issue.reason.t4_timeouts_detected": "T4 timeouts detected",
+        "cable_issue.reason.ofdm_error_rate_high": (
+            "Many OFDM uncorrected errors per hour"
+        ),
+        "cable_issue.reason.t3_timeout_rate_high": "Many T3 timeouts per hour",
         "binary_sensor.internet_outage.name": "Internet Outage",
         "binary_sensor.upstream_timeouts.name": "Upstream Timeouts Present",
         "button.release_session.name": "Release Session",
