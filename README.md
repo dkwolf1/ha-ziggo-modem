@@ -133,6 +133,11 @@ Binary sensors:
 - Upstream timeouts present
 - Internet access
 
+The Cable issue sensor includes diagnostic attributes with all active reason
+codes, translated explanations and the measurements that triggered it. This
+makes it possible to distinguish an unlocked channel, low SNR, abnormal power,
+timeouts or a high OFDM error rate without downloading diagnostics first.
+
 Switches and buttons:
 
 - Pause integration
@@ -294,6 +299,11 @@ Binary sensors:
 - Internet storing
 - Upstream timeouts aanwezig
 - Internettoegang
+
+De sensor Kabelprobleem bevat diagnostische attributen met alle actieve
+redencodes, vertaalde uitleg en de meetwaarden die de melding veroorzaakten. Zo
+is zonder diagnostiekbestand direct te zien of het gaat om een niet-gelockt
+kanaal, lage SNR, afwijkende power, timeouts of veel OFDM-fouten.
 
 Switches en buttons:
 

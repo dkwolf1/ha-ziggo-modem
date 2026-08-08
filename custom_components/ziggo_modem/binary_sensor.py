@@ -99,11 +99,11 @@ def internet_outage(data) -> bool:
     return normalize_access_allowed(value) is False
 
 
-def has_cable_issue(
+def analyze_cable_issue(
     data,
     thresholds: Mapping[str, float] | None = None,
-):
-    """Return True only for real DOCSIS signal problems (not minor fluctuations)."""
+) -> dict[str, Any]:
+    """Return cable issue causes and the measurements used to detect them."""
     thresholds = thresholds or {}
     downstream_power_min = float(
         thresholds.get(
@@ -153,51 +153,54 @@ def has_cable_issue(
 
     ofdm_rate = ofdm_uncorrected_total / hours
     t3_rate = t3_timeouts_total / hours
+    reason_codes: list[str] = []
 
-    # =========================
-    # Harde problemen
-    # =========================
-
-    # Unlocked channels always indicate a problem.
     if ds_total and ds_locked < ds_total:
-        return True
+        reason_codes.append("downstream_channels_unlocked")
 
-    # Bad SNR is a real problem.
     if ds_snr is not None and ds_snr < downstream_snr_min - 1:
-        return True
+        reason_codes.append("downstream_snr_low")
 
-    # Keep a safety margin beyond the configured quality range.
     if ds_power is not None and (
         ds_power < downstream_power_min - 2
         or ds_power > downstream_power_max + 2
     ):
-        return True
+        reason_codes.append("downstream_power_out_of_range")
 
-    # High upstream power means the modem has to transmit too hard.
     if us_power is not None and us_power > upstream_power_max:
-        return True
+        reason_codes.append("upstream_power_high")
 
-    # T4 timeouts always indicate a problem.
     if t4_timeouts_total > 0:
-        return True
+        reason_codes.append("t4_timeouts_detected")
 
-    # =========================
-    # Zwaardere instabiliteit (rate-based)
-    # =========================
-
-    # Many OFDM errors per hour indicate a problem.
     if ofdm_rate > 5000:
-        return True
+        reason_codes.append("ofdm_error_rate_high")
 
-    # Structural T3 timeouts indicate a problem.
     if t3_rate > 10:
-        return True
+        reason_codes.append("t3_timeout_rate_high")
 
-    # =========================
-    # Everything below these thresholds is not treated as a problem.
-    # =========================
+    return {
+        "reason_codes": reason_codes,
+        "downstream_locked_channels": ds_locked,
+        "downstream_total_channels": ds_total,
+        "downstream_snr_min": ds_snr,
+        "downstream_power_avg": ds_power,
+        "upstream_power_avg": us_power,
+        "t3_timeouts_total": t3_timeouts_total,
+        "t3_timeouts_per_hour": round(t3_rate, 2),
+        "t4_timeouts_total": t4_timeouts_total,
+        "ofdm_uncorrected_errors_total": ofdm_uncorrected_total,
+        "ofdm_uncorrected_errors_per_hour": round(ofdm_rate, 2),
+    }
 
-    return False
+
+def has_cable_issue(
+    data,
+    thresholds: Mapping[str, float] | None = None,
+) -> bool:
+    """Return whether the DOCSIS measurements indicate a cable issue."""
+    analysis = analyze_cable_issue(data, thresholds)
+    return bool(analysis["reason_codes"])
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -279,3 +282,26 @@ class ZiggoModemBinarySensor(ZiggoModemBaseEntity, BinarySensorEntity):
             return self.entity_description.value_fn(self.coordinator.data)
         except Exception:
             return False
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return details explaining why a cable issue is active."""
+        if self.entity_description.key != "cable_issue":
+            return None
+
+        try:
+            analysis = analyze_cable_issue(
+                self.coordinator.data,
+                self.coordinator.signal_thresholds,
+            )
+        except Exception:
+            return None
+
+        reason_codes = analysis["reason_codes"]
+        return {
+            **analysis,
+            "reasons": [
+                self.coordinator.translate(f"cable_issue.reason.{reason_code}")
+                for reason_code in reason_codes
+            ],
+        }
