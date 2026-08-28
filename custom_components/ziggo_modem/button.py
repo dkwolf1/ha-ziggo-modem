@@ -2,20 +2,24 @@ from __future__ import annotations
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.const import EntityCategory
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api import ZiggoModemApi
-from .const import CONF_HOST, DOMAIN
+from .const import CONF_HOST
 from .coordinator import ZiggoModemDataUpdateCoordinator
+from .data import ZiggoModemConfigEntry
 from .entity import ZiggoModemBaseEntity
 
 
-async def async_setup_entry(hass, entry, async_add_entities: AddEntitiesCallback):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ZiggoModemConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Set up Ziggo modem buttons."""
-    api: ZiggoModemApi = hass.data[DOMAIN][entry.entry_id]["api"]
-    coordinator: ZiggoModemDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][
-        "coordinator"
-    ]
+    api = entry.runtime_data.api
+    coordinator = entry.runtime_data.coordinator
     host = entry.options.get(CONF_HOST, entry.data[CONF_HOST])
 
     async_add_entities(

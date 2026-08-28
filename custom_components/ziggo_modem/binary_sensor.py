@@ -10,6 +10,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.const import EntityCategory
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
@@ -22,11 +23,11 @@ from .const import (
     DEFAULT_DOWNSTREAM_POWER_MIN,
     DEFAULT_DOWNSTREAM_SNR_MIN,
     DEFAULT_UPSTREAM_POWER_MAX,
-    DOMAIN,
     ENDPOINT_DOWNSTREAM,
     ENDPOINT_STATE,
     ENDPOINT_UPSTREAM,
 )
+from .data import ZiggoModemConfigEntry
 from .entity import ZiggoModemBaseEntity
 
 
@@ -251,8 +252,13 @@ BINARY_SENSORS = (
 )
 
 
-async def async_setup_entry(hass, entry, async_add_entities: AddEntitiesCallback):
-    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ZiggoModemConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up Ziggo modem binary sensors."""
+    coordinator = entry.runtime_data.coordinator
     host = entry.options.get(CONF_HOST, entry.data[CONF_HOST])
 
     async_add_entities(

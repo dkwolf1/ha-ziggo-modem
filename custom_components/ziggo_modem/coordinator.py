@@ -5,7 +5,6 @@ from collections.abc import Collection
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.storage import Store
@@ -16,18 +15,16 @@ from .const import (
     CONF_DOWNSTREAM_POWER_MAX,
     CONF_DOWNSTREAM_POWER_MIN,
     CONF_DOWNSTREAM_SNR_MIN,
-    CONF_LANGUAGE,
     CONF_SCAN_INTERVAL,
     CONF_UPSTREAM_POWER_MAX,
-    CONF_VERBOSE_DIAGNOSTICS,
     DEFAULT_DOWNSTREAM_POWER_MAX,
     DEFAULT_DOWNSTREAM_POWER_MIN,
     DEFAULT_DOWNSTREAM_SNR_MIN,
-    DEFAULT_LANGUAGE,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_UPSTREAM_POWER_MAX,
     DOMAIN,
 )
+from .data import ZiggoModemConfigEntry
 from .i18n import translate
 
 _LOGGER = logging.getLogger(__name__)
@@ -51,7 +48,7 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self,
         hass: HomeAssistant,
         api: ZiggoModemApi,
-        entry: ConfigEntry,
+        entry: ZiggoModemConfigEntry,
     ) -> None:
         self.entry = entry
         self.api = api
@@ -165,20 +162,17 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     @property
     def is_paused(self) -> bool:
         """Return whether the integration is currently paused."""
-        entry_data = self.hass.data.get(DOMAIN, {}).get(self.entry.entry_id, {})
-        return bool(entry_data.get("paused", False))
+        return self.entry.runtime_data.paused
 
     @property
     def verbose_diagnostics(self) -> bool:
         """Return whether verbose diagnostic attributes are enabled."""
-        entry_data = self.hass.data.get(DOMAIN, {}).get(self.entry.entry_id, {})
-        return bool(entry_data.get(CONF_VERBOSE_DIAGNOSTICS, False))
+        return self.entry.runtime_data.verbose_diagnostics
 
     @property
     def language(self) -> str:
         """Return the configured integration language."""
-        entry_data = self.hass.data.get(DOMAIN, {}).get(self.entry.entry_id, {})
-        return entry_data.get(CONF_LANGUAGE, DEFAULT_LANGUAGE)
+        return self.entry.runtime_data.language
 
     def translate(self, key: str) -> str:
         """Translate a key using the configured integration language."""

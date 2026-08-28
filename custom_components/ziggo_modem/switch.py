@@ -1,34 +1,32 @@
 from __future__ import annotations
 
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api import ZiggoModemApi
-from .const import CONF_HOST, CONF_VERBOSE_DIAGNOSTICS, DOMAIN
+from .const import CONF_HOST, CONF_VERBOSE_DIAGNOSTICS
 from .coordinator import ZiggoModemDataUpdateCoordinator
+from .data import ZiggoModemConfigEntry
 from .entity import ZiggoModemBaseEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: ZiggoModemConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Ziggo modem switches."""
-    entry_data = hass.data[DOMAIN][entry.entry_id]
-    api: ZiggoModemApi = entry_data["api"]
-    coordinator: ZiggoModemDataUpdateCoordinator = entry_data["coordinator"]
+    api = entry.runtime_data.api
+    coordinator = entry.runtime_data.coordinator
     host: str = entry.options.get(CONF_HOST, entry.data[CONF_HOST])
 
     async_add_entities(
         [
             ZiggoModemPauseSwitch(
-                hass,
                 coordinator,
-                entry.entry_id,
+                entry,
                 host,
                 api,
             ),
@@ -47,35 +45,33 @@ class ZiggoModemPauseSwitch(ZiggoModemBaseEntity, SwitchEntity):
 
     def __init__(
         self,
-        hass: HomeAssistant,
         coordinator: ZiggoModemDataUpdateCoordinator,
-        entry_id: str,
+        entry: ZiggoModemConfigEntry,
         host: str,
         api: ZiggoModemApi,
     ) -> None:
-        super().__init__(coordinator, entry_id, host)
-        self.hass = hass
-        self._entry_id = entry_id
+        super().__init__(coordinator, entry.entry_id, host)
+        self._entry = entry
         self._api = api
         self._translation_key = "switch.pause.name"
         self._attr_name = coordinator.translate("switch.pause.name")
-        self._attr_unique_id = f"{entry_id}_pause_integration"
+        self._attr_unique_id = f"{entry.entry_id}_pause_integration"
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def is_on(self) -> bool:
         """Return true if integration is paused."""
-        return self.hass.data[DOMAIN][self._entry_id]["paused"]
+        return self._entry.runtime_data.paused
 
     async def async_turn_on(self, **kwargs) -> None:
         """Pause polling and release session."""
-        self.hass.data[DOMAIN][self._entry_id]["paused"] = True
+        self._entry.runtime_data.paused = True
         await self._api.async_release_session()
         self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs) -> None:
         """Resume polling."""
-        self.hass.data[DOMAIN][self._entry_id]["paused"] = False
+        self._entry.runtime_data.paused = False
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
@@ -87,7 +83,7 @@ class ZiggoModemVerboseDiagnosticsSwitch(ZiggoModemBaseEntity, SwitchEntity):
         self,
         hass: HomeAssistant,
         coordinator: ZiggoModemDataUpdateCoordinator,
-        entry: ConfigEntry,
+        entry: ZiggoModemConfigEntry,
         host: str,
     ) -> None:
         super().__init__(coordinator, entry.entry_id, host)
@@ -113,9 +109,7 @@ class ZiggoModemVerboseDiagnosticsSwitch(ZiggoModemBaseEntity, SwitchEntity):
         await self._set_verbose_diagnostics(False)
 
     async def _set_verbose_diagnostics(self, enabled: bool) -> None:
-        self.hass.data[DOMAIN][self._entry.entry_id][
-            CONF_VERBOSE_DIAGNOSTICS
-        ] = enabled
+        self._entry.runtime_data.verbose_diagnostics = enabled
 
         self.hass.config_entries.async_update_entry(
             self._entry,

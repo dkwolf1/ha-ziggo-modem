@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import ZiggoModemApi
 from .const import (
@@ -12,13 +12,16 @@ from .const import (
     CONF_VERBOSE_DIAGNOSTICS,
     DEFAULT_LANGUAGE,
     DEFAULT_VERBOSE_DIAGNOSTICS,
-    DOMAIN,
     PLATFORMS,
 )
 from .coordinator import ZiggoModemDataUpdateCoordinator
+from .data import ZiggoModemConfigEntry, ZiggoModemRuntimeData
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ZiggoModemConfigEntry,
+) -> bool:
     """Set up Ziggo modem from a config entry."""
     host = entry.options.get(CONF_HOST, entry.data[CONF_HOST])
     username = entry.options.get(
@@ -31,35 +34,38 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         host=host,
         username=username,
         password=password,
+        session=async_get_clientsession(hass, verify_ssl=False),
     )
-    await api.async_initialize()
 
     coordinator = ZiggoModemDataUpdateCoordinator(hass, api, entry)
 
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = {
-        "api": api,
-        "coordinator": coordinator,
-        "paused": False,
-        "verbose_diagnostics": entry.options.get(
+    entry.runtime_data = ZiggoModemRuntimeData(
+        api=api,
+        coordinator=coordinator,
+        verbose_diagnostics=entry.options.get(
             CONF_VERBOSE_DIAGNOSTICS,
             DEFAULT_VERBOSE_DIAGNOSTICS,
         ),
-        CONF_LANGUAGE: entry.options.get(CONF_LANGUAGE, DEFAULT_LANGUAGE),
-    }
+        language=entry.options.get(CONF_LANGUAGE, DEFAULT_LANGUAGE),
+    )
 
-    await coordinator.async_config_entry_first_refresh()
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    try:
+        await coordinator.async_config_entry_first_refresh()
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    except Exception:
+        await api.async_close()
+        raise
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(
+    hass: HomeAssistant,
+    entry: ZiggoModemConfigEntry,
+) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     if unload_ok:
-        data = hass.data[DOMAIN].pop(entry.entry_id)
-        api: ZiggoModemApi = data["api"]
-        await api.async_close()
+        await entry.runtime_data.api.async_close()
 
     return unload_ok

@@ -5,11 +5,10 @@ from __future__ import annotations
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, DOMAIN
-from .coordinator import ZiggoModemDataUpdateCoordinator
+from .const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
+from .data import ZiggoModemConfigEntry
 
 TO_REDACT = {
     CONF_HOST,
@@ -18,6 +17,7 @@ TO_REDACT = {
     "accessToken",
     "authorization",
     "bssid",
+    "bootFilename",
     "cmMacAddress",
     "hostName",
     "hostname",
@@ -37,13 +37,11 @@ TO_REDACT = {
 
 async def async_get_config_entry_diagnostics(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: ZiggoModemConfigEntry,
 ) -> dict[str, Any]:
     """Return redacted diagnostics for a config entry."""
-    entry_data = hass.data.get(DOMAIN, {}).get(entry.entry_id, {})
-    coordinator: ZiggoModemDataUpdateCoordinator | None = entry_data.get(
-        "coordinator"
-    )
+    runtime_data = getattr(entry, "runtime_data", None)
+    coordinator = runtime_data.coordinator if runtime_data is not None else None
 
     diagnostics: dict[str, Any] = {
         "entry": {
