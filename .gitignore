@@ -3,6 +3,17 @@ __pycache__/
 *.pyo
 *.pyd
 
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+build/
+dist/
+*.egg-info/
+
 .env
 .venv
 env/

@@ -20,12 +20,23 @@ class ZiggoModemAuthError(ZiggoModemApiError):
 class ZiggoModemApi:
     """Client for the Ziggo Sagemcom modem REST API."""
 
-    def __init__(self, host: str, username: str, password: str) -> None:
+    def __init__(
+        self,
+        host: str,
+        username: str,
+        password: str,
+        session: aiohttp.ClientSession,
+    ) -> None:
         self._host = host
         self._username = username
         self._password = password
         self._base_url = f"https://{host}/rest/v1"
-        self._session: aiohttp.ClientSession | None = None
+        self._session = session
+        self._timeout = aiohttp.ClientTimeout(total=20)
+        self._request_headers = {
+            "Accept": "application/json, text/plain, */*",
+            "Content-Type": "application/json",
+        }
         self._token: str | None = None
         self._token_lock = asyncio.Lock()
         self._last_endpoint_status: dict[str, str] = {}
@@ -40,37 +51,17 @@ class ZiggoModemApi:
         """Return the status of the last endpoint fetch."""
         return self._last_endpoint_status
 
-    async def async_initialize(self) -> None:
-        """Create HTTP session."""
-        if self._session is None or self._session.closed:
-            timeout = aiohttp.ClientTimeout(total=20)
-            connector = aiohttp.TCPConnector(ssl=False)
-
-            self._session = aiohttp.ClientSession(
-                timeout=timeout,
-                connector=connector,
-                headers={
-                    "Accept": "application/json, text/plain, */*",
-                    "Content-Type": "application/json",
-                },
-            )
-
     async def async_close(self) -> None:
-        """Close HTTP session."""
+        """Release the authenticated modem session."""
         try:
             await self.async_logout()
         except Exception:
             _LOGGER.debug("Logout failed during close", exc_info=True)
 
-        if self._session and not self._session.closed:
-            await self._session.close()
-
     async def async_login(self) -> None:
         """Authenticate and store token."""
-        await self.async_initialize()
-
-        if self._session is None:
-            raise ZiggoModemApiError("HTTP session not initialized")
+        if self._session.closed:
+            raise ZiggoModemApiError("Home Assistant HTTP session is closed")
 
         url = f"{self._base_url}/user/login"
         payload = {"password": self._password}
@@ -80,7 +71,12 @@ class ZiggoModemApi:
         _LOGGER.debug("Logging in to Ziggo modem at %s", self._host)
 
         try:
-            async with self._session.post(url, json=payload) as response:
+            async with self._session.post(
+                url,
+                json=payload,
+                headers=self._request_headers,
+                timeout=self._timeout,
+            ) as response:
                 text = await response.text()
 
                 if response.status in (401, 403):
@@ -105,7 +101,7 @@ class ZiggoModemApi:
 
     async def async_logout(self) -> None:
         """Try to log out gracefully."""
-        if self._session is None or self._session.closed or not self._token:
+        if self._session.closed or not self._token:
             return
 
         url = f"{self._base_url}/user/logout"
@@ -114,6 +110,7 @@ class ZiggoModemApi:
             async with self._session.post(
                 url,
                 headers=self._auth_headers(),
+                timeout=self._timeout,
             ) as response:
                 if response.status < 400:
                     _LOGGER.debug("Logout succeeded")
@@ -131,10 +128,6 @@ class ZiggoModemApi:
         except Exception:
             _LOGGER.debug("Logout failed", exc_info=True)
 
-        if self._session and not self._session.closed:
-            await self._session.close()
-
-        self._session = None
         self._token = None
 
     def _auth_headers(self) -> dict[str, str]:
@@ -156,10 +149,8 @@ class ZiggoModemApi:
         json_data: dict[str, Any] | None = None,
     ) -> Any:
         """Perform authenticated request."""
-        await self.async_initialize()
-
-        if self._session is None:
-            raise ZiggoModemApiError("HTTP session not initialized")
+        if self._session.closed:
+            raise ZiggoModemApiError("Home Assistant HTTP session is closed")
 
         async with self._token_lock:
             if not self._token:
@@ -174,6 +165,7 @@ class ZiggoModemApi:
                 url,
                 headers=self._auth_headers(),
                 json=json_data,
+                timeout=self._timeout,
             ) as response:
 
                 if response.status in (401, 403) and retry_on_auth:

@@ -12,6 +12,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import EntityCategory
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
@@ -25,7 +26,6 @@ from .const import (
     DEFAULT_DOWNSTREAM_SNR_MIN,
     DEFAULT_LANGUAGE,
     DEFAULT_UPSTREAM_POWER_MAX,
-    DOMAIN,
     ENDPOINT_DOWNSTREAM,
     ENDPOINT_SERVICEFLOWS,
     ENDPOINT_SOFTWAREUPDATE,
@@ -33,6 +33,7 @@ from .const import (
     ENDPOINT_UPSTREAM,
     LANGUAGE_NL,
 )
+from .data import ZiggoModemConfigEntry
 from .entity import ZiggoModemBaseEntity
 from .i18n import translate
 
@@ -721,8 +722,13 @@ SENSORS = (
 )
 
 
-async def async_setup_entry(hass, entry, async_add_entities: AddEntitiesCallback):
-    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ZiggoModemConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up Ziggo modem sensors."""
+    coordinator = entry.runtime_data.coordinator
     host = entry.options.get(CONF_HOST, entry.data[CONF_HOST])
 
     async_add_entities(

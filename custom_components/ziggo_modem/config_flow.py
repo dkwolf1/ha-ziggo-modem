@@ -5,9 +5,10 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import selector
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import ZiggoModemApi, ZiggoModemApiError, ZiggoModemAuthError
 from .const import (
@@ -33,11 +34,27 @@ from .const import (
     LANGUAGE_EN,
     LANGUAGE_NL,
 )
+from .data import ZiggoModemConfigEntry
 
 LANGUAGE_SELECTOR = {
     LANGUAGE_NL: "Nederlands",
     LANGUAGE_EN: "English",
 }
+
+
+def _create_api(
+    hass: HomeAssistant,
+    host: str,
+    username: str,
+    password: str,
+) -> ZiggoModemApi:
+    """Create an API client using Home Assistant's shared web session."""
+    return ZiggoModemApi(
+        host,
+        username,
+        password,
+        async_get_clientsession(hass, verify_ssl=False),
+    )
 
 
 class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -54,10 +71,9 @@ class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             password = user_input[CONF_PASSWORD]
             language = user_input[CONF_LANGUAGE]
 
-            api = ZiggoModemApi(host, username, password)
+            api = _create_api(self.hass, host, username, password)
 
             try:
-                await api.async_initialize()
                 await api.async_login()
             except ZiggoModemAuthError:
                 errors["base"] = "invalid_auth"
@@ -128,10 +144,9 @@ class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             username = user_input.get(CONF_USERNAME, "")
             password = user_input[CONF_PASSWORD]
-            api = ZiggoModemApi(host, username, password)
+            api = _create_api(self.hass, host, username, password)
 
             try:
-                await api.async_initialize()
                 await api.async_login()
             except ZiggoModemAuthError:
                 errors["base"] = "invalid_auth"
@@ -183,11 +198,13 @@ class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry):
+    def async_get_options_flow(
+        config_entry: ZiggoModemConfigEntry,
+    ) -> ZiggoModemOptionsFlow:
         return ZiggoModemOptionsFlow()
 
 
-class ZiggoModemOptionsFlow(config_entries.OptionsFlow):
+class ZiggoModemOptionsFlow(config_entries.OptionsFlowWithReload):
     """Handle Ziggo Modem options."""
 
     async def async_step_init(self, user_input=None) -> FlowResult:
@@ -239,10 +256,9 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlow):
             username = user_input.get(CONF_USERNAME, "")
             password = user_input[CONF_PASSWORD]
 
-            api = ZiggoModemApi(host, username, password)
+            api = _create_api(self.hass, host, username, password)
 
             try:
-                await api.async_initialize()
                 await api.async_login()
             except ZiggoModemAuthError:
                 errors["base"] = "invalid_auth"
@@ -254,16 +270,6 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlow):
                 await api.async_close()
 
             if not errors:
-                entry_data = self.hass.data.get(DOMAIN, {}).get(
-                    self.config_entry.entry_id
-                )
-                if entry_data:
-                    entry_data[CONF_VERBOSE_DIAGNOSTICS] = user_input[
-                        CONF_VERBOSE_DIAGNOSTICS
-                    ]
-                    entry_data[CONF_LANGUAGE] = user_input[CONF_LANGUAGE]
-                    entry_data["coordinator"].async_update_listeners()
-
                 return self.async_create_entry(
                     title="",
                     data={
