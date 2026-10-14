@@ -18,16 +18,25 @@
           "username": "Gebruikersnaam (optioneel)",
           "password": "Wachtwoord"
         }
+      },
+      "reconfigure": {
+        "title": "Ziggo Modem adres wijzigen",
+        "description": "Voer het nieuwe lokale IP-adres van het modem in.",
+        "data": {
+          "host": "IP-adres"
+        }
       }
     },
     "error": {
       "invalid_auth": "Ongeldige inloggegevens",
       "cannot_connect": "Kan geen verbinding maken met modem",
-      "unknown": "Onbekende fout"
+      "unknown": "Onbekende fout",
+      "already_configured": "Een modem op dit adres is al toegevoegd"
     },
     "abort": {
       "already_configured": "Modem is al toegevoegd",
-      "reauth_successful": "De authenticatie is bijgewerkt"
+      "reauth_successful": "De authenticatie is bijgewerkt",
+      "reconfigure_successful": "Het modemadres is bijgewerkt"
     }
   },
   "options": {
@@ -36,9 +45,6 @@
         "title": "Ziggo Modem Instellingen",
         "description": "Pas de instellingen van de integratie aan.",
         "data": {
-          "host": "IP-adres",
-          "username": "Gebruikersnaam (optioneel)",
-          "password": "Wachtwoord",
           "scan_interval": "Polling interval (seconden)",
           "downstream_power_min": "Minimale downstream power (dBmV)",
           "downstream_power_max": "Maximale downstream power (dBmV)",
@@ -48,6 +54,14 @@
           "language": "Taal van integratie"
         }
       }
+    }
+  },
+  "exceptions": {
+    "release_session_failed": {
+      "message": "De modemsessie kon niet worden vrijgegeven."
+    },
+    "reboot_failed": {
+      "message": "Het modem kon niet worden herstart."
     }
   }
 }

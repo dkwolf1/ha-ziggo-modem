@@ -30,6 +30,8 @@ from .const import (
 from .data import ZiggoModemConfigEntry
 from .entity import ZiggoModemBaseEntity
 
+PARALLEL_UPDATES = 0
+
 
 def get_ds_channels(data):
     return data.get("downstream", {}).get("downstream", {}).get("channels", [])
@@ -259,7 +261,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Ziggo modem binary sensors."""
     coordinator = entry.runtime_data.coordinator
-    host = entry.options.get(CONF_HOST, entry.data[CONF_HOST])
+    host = entry.data[CONF_HOST]
 
     async_add_entities(
         ZiggoModemBinarySensor(coordinator, entry.entry_id, host, desc)

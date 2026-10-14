@@ -37,6 +37,8 @@ from .data import ZiggoModemConfigEntry
 from .entity import ZiggoModemBaseEntity
 from .i18n import translate
 
+PARALLEL_UPDATES = 0
+
 # =========================
 # Helpers
 # =========================
@@ -729,7 +731,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Ziggo modem sensors."""
     coordinator = entry.runtime_data.coordinator
-    host = entry.options.get(CONF_HOST, entry.data[CONF_HOST])
+    host = entry.data[CONF_HOST]
 
     async_add_entities(
         ZiggoModemSensor(coordinator, entry.entry_id, host, desc)
