@@ -72,6 +72,7 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=entry,
             name="ziggo_modem",
             update_interval=timedelta(seconds=scan_interval),
         )
@@ -236,6 +237,8 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             ):
                 raise ZiggoModemApiError("All modem endpoints failed")
 
+            if 0 < self._consecutive_failures < self._max_failures:
+                _LOGGER.info("Ziggo modem at %s is reachable again", self.api.host)
             self._consecutive_failures = 0
             self._last_successful_update = now
             await self._async_record_success(data, now)
@@ -251,20 +254,20 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._consecutive_failures += 1
             await self._async_record_failed_update()
 
-            _LOGGER.warning(
-                "Ziggo modem fetch failed for %s (%s/%s): %s",
-                self.api.host,
-                self._consecutive_failures,
-                self._max_failures,
-                err,
-            )
+            if self.data is not None and self._consecutive_failures == 1:
+                _LOGGER.warning(
+                    "Ziggo modem at %s is unavailable: %s", self.api.host, err
+                )
 
-            if self._consecutive_failures < self._max_failures:
+            if (
+                self.data is not None
+                and self._consecutive_failures < self._max_failures
+            ):
                 _LOGGER.debug("Using last known data due to temporary failure")
-                return self.data if self.data is not None else {}
+                return self.data
 
             raise UpdateFailed(
-                f"API error after {self._max_failures} retries: {err}"
+                f"Ziggo modem at {self.api.host} is unavailable"
             ) from err
 
     async def _async_record_success(

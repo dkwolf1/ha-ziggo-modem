@@ -3,13 +3,16 @@ from __future__ import annotations
 from homeassistant.components.button import ButtonEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .api import ZiggoModemApi
-from .const import CONF_HOST
+from .api import ZiggoModemApi, ZiggoModemApiError
+from .const import CONF_HOST, DOMAIN
 from .coordinator import ZiggoModemDataUpdateCoordinator
 from .data import ZiggoModemConfigEntry
 from .entity import ZiggoModemBaseEntity
+
+PARALLEL_UPDATES = 1
 
 
 async def async_setup_entry(
@@ -20,7 +23,7 @@ async def async_setup_entry(
     """Set up Ziggo modem buttons."""
     api = entry.runtime_data.api
     coordinator = entry.runtime_data.coordinator
-    host = entry.options.get(CONF_HOST, entry.data[CONF_HOST])
+    host = entry.data[CONF_HOST]
 
     async_add_entities(
         [
@@ -60,8 +63,14 @@ class ZiggoModemReleaseSessionButton(ZiggoModemBaseEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Handle the button press."""
-        await self._api.async_release_session()
-        await self.coordinator.async_request_refresh()
+        try:
+            await self._api.async_release_session()
+            await self.coordinator.async_request_refresh()
+        except ZiggoModemApiError as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="release_session_failed",
+            ) from err
 
 
 class ZiggoModemRebootButton(ZiggoModemBaseEntity, ButtonEntity):
@@ -84,4 +93,10 @@ class ZiggoModemRebootButton(ZiggoModemBaseEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Handle the button press."""
-        await self._api.async_reboot()
+        try:
+            await self._api.async_reboot()
+        except ZiggoModemApiError as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="reboot_failed",
+            ) from err

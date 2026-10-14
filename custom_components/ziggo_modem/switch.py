@@ -11,6 +11,8 @@ from .coordinator import ZiggoModemDataUpdateCoordinator
 from .data import ZiggoModemConfigEntry
 from .entity import ZiggoModemBaseEntity
 
+PARALLEL_UPDATES = 1
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -20,7 +22,7 @@ async def async_setup_entry(
     """Set up Ziggo modem switches."""
     api = entry.runtime_data.api
     coordinator = entry.runtime_data.coordinator
-    host: str = entry.options.get(CONF_HOST, entry.data[CONF_HOST])
+    host: str = entry.data[CONF_HOST]
 
     async_add_entities(
         [

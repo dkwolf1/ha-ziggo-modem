@@ -18,17 +18,35 @@ from .coordinator import ZiggoModemDataUpdateCoordinator
 from .data import ZiggoModemConfigEntry, ZiggoModemRuntimeData
 
 
+async def async_migrate_entry(
+    hass: HomeAssistant,
+    entry: ZiggoModemConfigEntry,
+) -> bool:
+    """Move connection details from legacy options into entry data."""
+    if entry.version != 1:
+        return False
+
+    data = dict(entry.data)
+    options = dict(entry.options)
+    options.setdefault(CONF_LANGUAGE, data.pop(CONF_LANGUAGE, DEFAULT_LANGUAGE))
+    for key in (CONF_HOST, CONF_USERNAME, CONF_PASSWORD):
+        if key in options:
+            data[key] = options.pop(key)
+
+    hass.config_entries.async_update_entry(
+        entry, data=data, options=options, version=2
+    )
+    return True
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ZiggoModemConfigEntry,
 ) -> bool:
     """Set up Ziggo modem from a config entry."""
-    host = entry.options.get(CONF_HOST, entry.data[CONF_HOST])
-    username = entry.options.get(
-        CONF_USERNAME,
-        entry.data.get(CONF_USERNAME, ""),
-    )
-    password = entry.options.get(CONF_PASSWORD, entry.data[CONF_PASSWORD])
+    host = entry.data[CONF_HOST]
+    username = entry.data.get(CONF_USERNAME, "")
+    password = entry.data[CONF_PASSWORD]
 
     api = ZiggoModemApi(
         host=host,

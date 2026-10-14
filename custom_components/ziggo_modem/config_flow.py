@@ -60,7 +60,7 @@ def _create_api(
 class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Ziggo Modem."""
 
-    VERSION = 1
+    VERSION = 2
 
     async def async_step_user(self, user_input=None) -> FlowResult:
         errors: dict[str, str] = {}
@@ -85,12 +85,22 @@ class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await api.async_close()
 
             if not errors:
+                if any(
+                    other.data.get(CONF_HOST) == host
+                    or other.options.get(CONF_HOST) == host
+                    for other in self._async_current_entries()
+                ):
+                    return self.async_abort(reason="already_configured")
                 await self.async_set_unique_id(host)
                 self._abort_if_unique_id_configured()
 
                 return self.async_create_entry(
                     title=f"Ziggo Modem ({host})",
-                    data=user_input,
+                    data={
+                        CONF_HOST: host,
+                        CONF_USERNAME: username,
+                        CONF_PASSWORD: password,
+                    },
                     options={
                         CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
                         CONF_DOWNSTREAM_POWER_MIN: DEFAULT_DOWNSTREAM_POWER_MIN,
@@ -108,11 +118,72 @@ class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(CONF_HOST, default=DEFAULT_HOST): str,
                     vol.Optional(CONF_USERNAME, default=""): str,
-                    vol.Required(CONF_PASSWORD): str,
+                    vol.Required(CONF_PASSWORD): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.PASSWORD,
+                        )
+                    ),
                     vol.Required(
                         CONF_LANGUAGE,
                         default=DEFAULT_LANGUAGE,
                     ): vol.In(LANGUAGE_SELECTOR),
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_reconfigure(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ) -> FlowResult:
+        """Update the modem address without replacing the config entry."""
+        entry = self._get_reconfigure_entry()
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            host = user_input[CONF_HOST]
+            if any(
+                other.entry_id != entry.entry_id
+                and (
+                    other.data.get(CONF_HOST) == host
+                    or other.options.get(CONF_HOST) == host
+                )
+                for other in self._async_current_entries()
+            ):
+                errors["base"] = "already_configured"
+            else:
+                api = _create_api(
+                    self.hass,
+                    host,
+                    entry.data.get(CONF_USERNAME, ""),
+                    entry.data[CONF_PASSWORD],
+                )
+                try:
+                    await api.async_login()
+                except ZiggoModemAuthError:
+                    errors["base"] = "invalid_auth"
+                except ZiggoModemApiError:
+                    errors["base"] = "cannot_connect"
+                except Exception:
+                    errors["base"] = "unknown"
+                finally:
+                    await api.async_close()
+
+            if not errors:
+                self.hass.config_entries.async_update_entry(entry, unique_id=host)
+                return self.async_update_reload_and_abort(
+                    entry,
+                    data_updates={CONF_HOST: host},
+                )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_HOST,
+                        default=entry.data[CONF_HOST],
+                    ): str,
                 }
             ),
             errors=errors,
@@ -131,14 +202,8 @@ class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
         """Validate and store replacement modem credentials."""
         entry = self._get_reauth_entry()
-        host = entry.options.get(
-            CONF_HOST,
-            entry.data.get(CONF_HOST, DEFAULT_HOST),
-        )
-        current_username = entry.options.get(
-            CONF_USERNAME,
-            entry.data.get(CONF_USERNAME, ""),
-        )
+        host = entry.data[CONF_HOST]
+        current_username = entry.data.get(CONF_USERNAME, "")
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -165,13 +230,6 @@ class ZiggoModemConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_USERNAME: username,
                     CONF_PASSWORD: password,
                 }
-                self.hass.config_entries.async_update_entry(
-                    entry,
-                    options={
-                        **entry.options,
-                        **credential_updates,
-                    },
-                )
                 return self.async_update_reload_and_abort(
                     entry,
                     data_updates=credential_updates,
@@ -210,18 +268,6 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlowWithReload):
     async def async_step_init(self, user_input=None) -> FlowResult:
         errors: dict[str, str] = {}
 
-        current_host = self.config_entry.options.get(
-            CONF_HOST,
-            self.config_entry.data.get(CONF_HOST, DEFAULT_HOST),
-        )
-        current_username = self.config_entry.options.get(
-            CONF_USERNAME,
-            self.config_entry.data.get(CONF_USERNAME, ""),
-        )
-        current_password = self.config_entry.options.get(
-            CONF_PASSWORD,
-            self.config_entry.data.get(CONF_PASSWORD, ""),
-        )
         current_scan_interval = self.config_entry.options.get(
             CONF_SCAN_INTERVAL,
             DEFAULT_SCAN_INTERVAL,
@@ -252,57 +298,23 @@ class ZiggoModemOptionsFlow(config_entries.OptionsFlowWithReload):
         )
 
         if user_input is not None:
-            host = user_input[CONF_HOST]
-            username = user_input.get(CONF_USERNAME, "")
-            password = user_input[CONF_PASSWORD]
-
-            api = _create_api(self.hass, host, username, password)
-
-            try:
-                await api.async_login()
-            except ZiggoModemAuthError:
-                errors["base"] = "invalid_auth"
-            except ZiggoModemApiError:
-                errors["base"] = "cannot_connect"
-            except Exception:
-                errors["base"] = "unknown"
-            finally:
-                await api.async_close()
-
-            if not errors:
-                return self.async_create_entry(
-                    title="",
-                    data={
-                        CONF_HOST: host,
-                        CONF_USERNAME: username,
-                        CONF_PASSWORD: password,
-                        CONF_SCAN_INTERVAL: user_input[CONF_SCAN_INTERVAL],
-                        CONF_DOWNSTREAM_POWER_MIN: user_input[
-                            CONF_DOWNSTREAM_POWER_MIN
-                        ],
-                        CONF_DOWNSTREAM_POWER_MAX: user_input[
-                            CONF_DOWNSTREAM_POWER_MAX
-                        ],
-                        CONF_DOWNSTREAM_SNR_MIN: user_input[
-                            CONF_DOWNSTREAM_SNR_MIN
-                        ],
-                        CONF_UPSTREAM_POWER_MAX: user_input[
-                            CONF_UPSTREAM_POWER_MAX
-                        ],
-                        CONF_VERBOSE_DIAGNOSTICS: user_input[
-                            CONF_VERBOSE_DIAGNOSTICS
-                        ],
-                        CONF_LANGUAGE: user_input[CONF_LANGUAGE],
-                    },
-                )
+            return self.async_create_entry(
+                title="",
+                data={
+                    CONF_SCAN_INTERVAL: user_input[CONF_SCAN_INTERVAL],
+                    CONF_DOWNSTREAM_POWER_MIN: user_input[CONF_DOWNSTREAM_POWER_MIN],
+                    CONF_DOWNSTREAM_POWER_MAX: user_input[CONF_DOWNSTREAM_POWER_MAX],
+                    CONF_DOWNSTREAM_SNR_MIN: user_input[CONF_DOWNSTREAM_SNR_MIN],
+                    CONF_UPSTREAM_POWER_MAX: user_input[CONF_UPSTREAM_POWER_MAX],
+                    CONF_VERBOSE_DIAGNOSTICS: user_input[CONF_VERBOSE_DIAGNOSTICS],
+                    CONF_LANGUAGE: user_input[CONF_LANGUAGE],
+                },
+            )
 
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_HOST, default=current_host): str,
-                    vol.Optional(CONF_USERNAME, default=current_username): str,
-                    vol.Required(CONF_PASSWORD, default=current_password): str,
                     vol.Required(
                         CONF_SCAN_INTERVAL,
                         default=current_scan_interval,

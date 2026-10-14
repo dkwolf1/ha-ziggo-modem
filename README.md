@@ -90,6 +90,10 @@ If the modem password changes, Home Assistant displays a reauthentication
 prompt. Enter the current modem credentials there; removing and adding the
 integration again is not required.
 
+If the modem IP address changes, use **Reconfigure** on the integration to
+enter the new address. **Configure** remains for polling, signal thresholds,
+diagnostics and language; neither action requires removing the integration.
+
 ### Sensors
 
 General:
@@ -256,6 +260,11 @@ om niet op kleine schommelingen te reageren.
 Wanneer het modemwachtwoord verandert, toont Home Assistant een melding om
 opnieuw te authenticeren. Voer daar de actuele modeminloggegevens in; de
 integratie verwijderen en opnieuw toevoegen is niet nodig.
+
+Wijzigt het IP-adres van het modem, gebruik dan **Opnieuw configureren** bij de
+integratie om het nieuwe adres in te voeren. **Configureren** blijft voor het
+pollinginterval, signaalgrenzen, diagnostiek en taal. Verwijderen en opnieuw
+toevoegen is voor geen van beide nodig.
 
 ### Sensoren
 

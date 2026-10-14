@@ -18,16 +18,25 @@
           "username": "Username (optional)",
           "password": "Password"
         }
+      },
+      "reconfigure": {
+        "title": "Change Ziggo Modem address",
+        "description": "Enter the modem's new local IP address.",
+        "data": {
+          "host": "IP address"
+        }
       }
     },
     "error": {
       "invalid_auth": "Invalid credentials",
       "cannot_connect": "Cannot connect to modem",
-      "unknown": "Unknown error"
+      "unknown": "Unknown error",
+      "already_configured": "A modem at this address is already configured"
     },
     "abort": {
       "already_configured": "Modem is already configured",
-      "reauth_successful": "Authentication was updated successfully"
+      "reauth_successful": "Authentication was updated successfully",
+      "reconfigure_successful": "Modem address was updated successfully"
     }
   },
   "options": {
@@ -36,9 +45,6 @@
         "title": "Ziggo Modem Settings",
         "description": "Change the integration settings.",
         "data": {
-          "host": "IP address",
-          "username": "Username (optional)",
-          "password": "Password",
           "scan_interval": "Polling interval (seconds)",
           "downstream_power_min": "Minimum downstream power (dBmV)",
           "downstream_power_max": "Maximum downstream power (dBmV)",
@@ -48,6 +54,14 @@
           "language": "Integration language"
         }
       }
+    }
+  },
+  "exceptions": {
+    "release_session_failed": {
+      "message": "Could not release the modem session."
+    },
+    "reboot_failed": {
+      "message": "Could not restart the modem."
     }
   }
 }
