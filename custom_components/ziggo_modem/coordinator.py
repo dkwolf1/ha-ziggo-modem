@@ -30,6 +30,7 @@ from .i18n import translate
 _LOGGER = logging.getLogger(__name__)
 
 HISTORY_STORAGE_VERSION = 1
+STALE_DATA_GRACE = timedelta(minutes=10)
 HISTORY_DEFAULTS: dict[str, Any] = {
     "connection_interruptions": 0,
     "failed_updates": 0,
@@ -57,6 +58,9 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._max_failures = 3
         self._last_successful_update: datetime | None = None
         self._endpoint_status: dict[str, str] = {}
+        self._endpoint_failures: dict[str, int] = {}
+        self._last_endpoint_data: dict[str, Any] = {}
+        self._last_endpoint_success: dict[str, datetime] = {}
         self._history = dict(HISTORY_DEFAULTS)
         self._history_store = Store[dict[str, Any]](
             hass,
@@ -105,9 +109,16 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return self._endpoint_status
 
     def endpoints_available(self, endpoints: Collection[str]) -> bool:
-        """Return whether all required endpoints succeeded."""
+        """Keep cached readings available through brief endpoint failures."""
+        now = datetime.now(UTC)
         return all(
-            self._endpoint_status.get(endpoint) == "ok" for endpoint in endpoints
+            self._endpoint_status.get(endpoint) == "ok"
+            or (
+                endpoint in self._last_endpoint_data
+                and endpoint in self._last_endpoint_success
+                and now - self._last_endpoint_success[endpoint] < STALE_DATA_GRACE
+            )
+            for endpoint in endpoints
         )
 
     @property
@@ -185,13 +196,24 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if self.is_paused:
             return self.translate("api_status.paused")
 
-        if self._consecutive_failures == 0:
-            return self.translate("api_status.ok")
+        if self._consecutive_failures >= self._max_failures:
+            return self.translate("api_status.unstable")
 
-        if self._consecutive_failures < self._max_failures:
+        failed_endpoints = (
+            endpoint
+            for endpoint, status in self._endpoint_status.items()
+            if status == "failed"
+        )
+        if any(
+            not self.endpoints_available({endpoint})
+            for endpoint in failed_endpoints
+        ):
+            return self.translate("api_status.unstable")
+
+        if self._consecutive_failures or "failed" in self._endpoint_status.values():
             return self.translate("api_status.temporary_errors")
 
-        return self.translate("api_status.unstable")
+        return self.translate("api_status.ok")
 
     async def _async_setup(self) -> None:
         """Load persistent history before the first coordinator update."""
@@ -231,13 +253,41 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             data = await self.api.async_get_data()
             now = datetime.now(UTC)
             self._endpoint_status = self.api.last_endpoint_status
-
-            if self._endpoint_status and all(
+            all_failed = bool(self._endpoint_status) and all(
                 status == "failed" for status in self._endpoint_status.values()
-            ):
+            )
+
+            for endpoint, status in self._endpoint_status.items():
+                if status == "ok":
+                    failures = self._endpoint_failures.get(endpoint, 0)
+                    if failures and self._consecutive_failures == 0:
+                        _LOGGER.info(
+                            "Ziggo modem endpoint %s recovered after %s failed updates",
+                            endpoint,
+                            failures,
+                        )
+                    self._endpoint_failures[endpoint] = 0
+                    self._last_endpoint_data[endpoint] = data[endpoint]
+                    self._last_endpoint_success[endpoint] = now
+                elif status == "failed":
+                    self._endpoint_failures[endpoint] = (
+                        self._endpoint_failures.get(endpoint, 0) + 1
+                    )
+                    if endpoint in self._last_endpoint_data:
+                        data[endpoint] = self._last_endpoint_data[endpoint]
+
+                    if self._endpoint_failures[endpoint] == 1 and not all_failed:
+                        _LOGGER.warning(
+                            "Ziggo modem endpoint %s failed; using last reading "
+                            "for up to %s minutes",
+                            endpoint,
+                            int(STALE_DATA_GRACE.total_seconds() / 60),
+                        )
+
+            if all_failed:
                 raise ZiggoModemApiError("All modem endpoints failed")
 
-            if 0 < self._consecutive_failures < self._max_failures:
+            if self._consecutive_failures:
                 _LOGGER.info("Ziggo modem at %s is reachable again", self.api.host)
             self._consecutive_failures = 0
             self._last_successful_update = now
@@ -261,7 +311,8 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             if (
                 self.data is not None
-                and self._consecutive_failures < self._max_failures
+                and self._last_successful_update is not None
+                and datetime.now(UTC) - self._last_successful_update < STALE_DATA_GRACE
             ):
                 _LOGGER.debug("Using last known data due to temporary failure")
                 return self.data

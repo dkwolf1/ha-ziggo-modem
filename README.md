@@ -161,9 +161,12 @@ API data. Passwords, usernames, tokens, local IP addresses, serial numbers, MAC
 addresses and network identifiers are automatically redacted. Review the file
 before sharing it publicly.
 
-If an individual modem API endpoint fails, only entities that depend on that
-endpoint become unavailable. Other modem entities continue updating. API status
-and problem-history sensors remain available for troubleshooting.
+If a modem API endpoint briefly fails, dependent entities keep their last reading
+for up to 10 minutes. API Status reports temporary errors and a warning is logged
+when an endpoint starts failing. After 10 minutes without a successful reading,
+only entities that depend on that endpoint become unavailable. A complete modem
+outage follows the same grace period; authentication failures still require
+reauthentication. Other modem entities continue updating.
 
 ### Problem history
 
@@ -334,10 +337,12 @@ laatste modem-API-data. Wachtwoorden, gebruikersnamen, tokens, lokale
 IP-adressen, serienummers, MAC-adressen en netwerkidentificatie worden
 automatisch afgeschermd. Controleer het bestand voordat je het openbaar deelt.
 
-Wanneer een afzonderlijk modem-API-endpoint faalt, worden alleen de entiteiten
-die dat endpoint nodig hebben onbeschikbaar. Andere modementiteiten blijven
-bijwerken. De API-status en sensoren voor probleemgeschiedenis blijven
-beschikbaar voor probleemonderzoek.
+Als een modem-API-endpoint kort faalt, behouden de afhankelijke entiteiten hun
+laatste meting maximaal 10 minuten. API Status meldt tijdelijke fouten en bij de
+eerste fout verschijnt een waarschuwing in de log. Na 10 minuten zonder geslaagde
+meting worden alleen de afhankelijke entiteiten onbeschikbaar. Voor volledige
+modemuitval geldt dezelfde respijtperiode; bij ongeldige inloggegevens blijft
+herauthenticatie nodig. Andere modementiteiten blijven bijwerken.
 
 ### Probleemgeschiedenis
 
