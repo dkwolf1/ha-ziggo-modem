@@ -1,6 +1,7 @@
 {
   "domain": "ziggo_modem",
   "name": "Ziggo Modem",
+  "categories": ["computers_network.routers_network"],
   "codeowners": ["@dkwolf1"],
   "config_flow": true,
   "documentation": "https://github.com/dkwolf1/ha-ziggo-modem",
