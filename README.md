@@ -40,7 +40,16 @@ does not use SmartWifi Web or any external Ziggo website.
 
 ### Installation
 
-#### HACS (recommended)
+#### Marketplace (Home Assistant 2026.11 and newer)
+
+1. Go to **Settings > Marketplace**, or open [Ziggo Modem directly](https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkwolf1&repository=ha-ziggo-modem&category=integration).
+2. If prompted, connect GitHub and add this repository as a custom repository.
+3. Install **Ziggo Modem** and restart Home Assistant if requested.
+
+Existing HACS installations are transferred to the Marketplace automatically
+when upgrading Home Assistant; do not reinstall the integration.
+
+#### HACS (Home Assistant 2026.10 and older)
 
 1. Go to **HACS > Integrations**.
 2. Click **three dots > Custom repositories**.
@@ -213,7 +222,16 @@ geen SmartWifi Web of externe Ziggo-website.
 
 ### Installatie
 
-#### HACS (aanbevolen)
+#### Marketplace (Home Assistant 2026.11 en nieuwer)
+
+1. Ga naar **Instellingen > Marketplace**, of open [Ziggo Modem direct](https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkwolf1&repository=ha-ziggo-modem&category=integration).
+2. Koppel GitHub en voeg deze repository als aangepaste repository toe als daarom wordt gevraagd.
+3. Installeer **Ziggo Modem** en herstart Home Assistant als daarom wordt gevraagd.
+
+Bestaande HACS-installaties worden bij het bijwerken van Home Assistant
+automatisch overgenomen door de Marketplace. Installeer de integratie niet opnieuw.
+
+#### HACS (Home Assistant 2026.10 en ouder)
 
 1. Ga naar **HACS > Integraties**.
 2. Klik op **drie puntjes > Custom repositories**.
