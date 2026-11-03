@@ -85,10 +85,13 @@ is not used.
 
 Open **Settings > Devices & services > Ziggo Modem > Configure** to change:
 
+- Polling interval (default: `60 seconds`; range: `5-3600 seconds`)
 - Minimum downstream power (default: `-10 dBmV`)
 - Maximum downstream power (default: `10 dBmV`)
 - Minimum downstream SNR (default: `34 dB`)
 - Maximum upstream power (default: `52 dBmV`)
+- Verbose diagnostics (off by default)
+- Language (`Nederlands` or `English`)
 
 These thresholds affect signal quality, issue classification and the cable
 issue sensor. The defaults preserve the original integration behavior. The
@@ -266,12 +269,15 @@ cloud-login wordt niet gebruikt.
 ### Opties
 
 Open **Instellingen > Apparaten & diensten > Ziggo Modem > Configureren** om de
-volgende grenzen aan te passen:
+volgende opties aan te passen:
 
+- Pollinginterval (standaard: `60 seconden`; bereik: `5-3600 seconden`)
 - Minimale downstream power (standaard: `-10 dBmV`)
 - Maximale downstream power (standaard: `10 dBmV`)
 - Minimale downstream SNR (standaard: `34 dB`)
 - Maximale upstream power (standaard: `52 dBmV`)
+- Uitgebreide diagnostiek (standaard uit)
+- Taal (`Nederlands` of `English`)
 
 Deze grenzen worden gebruikt voor de signaalkwaliteit, storingsclassificatie en
 de kabelprobleemsensor. De standaardwaarden behouden het oorspronkelijke gedrag

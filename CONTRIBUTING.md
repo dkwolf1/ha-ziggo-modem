@@ -8,9 +8,15 @@
 
 ## Development
 
-- Use pre-commit hooks
-- Follow HA coding standards
-- Test on real hardware if possible
+- Use Python 3.14, the version used by the test job in CI
+- Install test dependencies: `python -m pip install -r requirements_test.txt`
+- Run tests: `python -m pytest -q`
+- Install pre-commit if needed: `python -m pip install pre-commit`
+- Run all hooks: `pre-commit run --all-files`
+- Check `git status` afterward; formatting hooks may update files
+- Follow Home Assistant coding standards and test on real hardware if possible
+
+Pull requests also run tests, pre-commit, Hassfest and HACS validation in CI.
 
 ## Pull Requests
 
