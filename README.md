@@ -64,6 +64,19 @@ when upgrading Home Assistant; do not reinstall the integration.
    directory.
 2. Restart Home Assistant.
 
+### Removal
+
+1. Go to **Settings > Devices & services > Ziggo Modem** and delete the
+   integration entry.
+2. If installed through the Marketplace, uninstall **Ziggo Modem** from
+   **Settings > Marketplace > Installed**. On older versions, uninstall it from
+   **HACS > Integrations** instead.
+3. For a manual installation, remove `custom_components/ziggo_modem` from your
+   Home Assistant configuration directory. Restart Home Assistant if requested.
+
+Removing the integration does not change modem settings. Previously saved
+problem-history data may remain in Home Assistant's `.storage` directory.
+
 ### Configuration
 
 The integration is configured through the Home Assistant UI:
@@ -248,6 +261,21 @@ automatisch overgenomen door de Marketplace. Installeer de integratie niet opnie
 1. Kopieer `custom_components/ziggo_modem` naar je Home Assistant
    configuratiemap.
 2. Herstart Home Assistant.
+
+### Verwijderen
+
+1. Ga naar **Instellingen > Apparaten & diensten > Ziggo Modem** en verwijder de
+   integratievermelding.
+2. Gebruik je Marketplace, verwijder **Ziggo Modem** dan ook via
+   **Instellingen > Marketplace > Geïnstalleerd**. Gebruik op oudere versies
+   **HACS > Integraties**.
+3. Verwijder bij een handmatige installatie `custom_components/ziggo_modem` uit
+   de Home Assistant-configuratiemap. Herstart Home Assistant als daarom wordt
+   gevraagd.
+
+Het verwijderen van de integratie verandert niets aan de modeminstellingen.
+Eerder opgeslagen probleemgeschiedenis kan in de `.storage`-map van Home
+Assistant achterblijven.
 
 ### Configuratie
 

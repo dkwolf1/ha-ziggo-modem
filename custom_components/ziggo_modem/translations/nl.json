@@ -9,6 +9,12 @@
           "username": "Gebruikersnaam (optioneel)",
           "password": "Wachtwoord",
           "language": "Taal van integratie"
+        },
+        "data_description": {
+          "host": "Lokaal modemadres dat Home Assistant kan bereiken.",
+          "username": "Laat leeg als het modem alleen om een wachtwoord vraagt.",
+          "password": "Wachtwoord voor de lokale modeminterface.",
+          "language": "Taal van de entiteiten en meldingen van deze integratie."
         }
       },
       "reauth_confirm": {
@@ -17,6 +23,10 @@
         "data": {
           "username": "Gebruikersnaam (optioneel)",
           "password": "Wachtwoord"
+        },
+        "data_description": {
+          "username": "Laat leeg als het modem alleen om een wachtwoord vraagt.",
+          "password": "Huidig wachtwoord voor de lokale modeminterface."
         }
       },
       "reconfigure": {
@@ -24,6 +34,9 @@
         "description": "Voer het nieuwe lokale IP-adres van het modem in.",
         "data": {
           "host": "IP-adres"
+        },
+        "data_description": {
+          "host": "Nieuw lokaal modemadres dat Home Assistant kan bereiken."
         }
       }
     },
@@ -52,6 +65,15 @@
           "upstream_power_max": "Maximale upstream power (dBmV)",
           "verbose_diagnostics": "Uitgebreide diagnostiek",
           "language": "Taal van integratie"
+        },
+        "data_description": {
+          "scan_interval": "Hoe vaak modemgegevens worden opgehaald, van 5 tot 3600 seconden.",
+          "downstream_power_min": "Laagste aanvaardbare downstream power.",
+          "downstream_power_max": "Hoogste aanvaardbare downstream power.",
+          "downstream_snr_min": "Laagste aanvaardbare downstream signaal-ruisverhouding.",
+          "upstream_power_max": "Hoogste aanvaardbare upstream power.",
+          "verbose_diagnostics": "Toon kanaaldetails in diagnostische attributen.",
+          "language": "Taal van de entiteiten en meldingen van deze integratie."
         }
       }
     }

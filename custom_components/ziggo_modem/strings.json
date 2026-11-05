@@ -9,6 +9,12 @@
           "username": "Username (optional)",
           "password": "Password",
           "language": "Integration language"
+        },
+        "data_description": {
+          "host": "Local modem address reachable from Home Assistant.",
+          "username": "Leave empty if the modem only asks for a password.",
+          "password": "Password for the modem's local interface.",
+          "language": "Language used by this integration's entities and messages."
         }
       },
       "reauth_confirm": {
@@ -17,6 +23,10 @@
         "data": {
           "username": "Username (optional)",
           "password": "Password"
+        },
+        "data_description": {
+          "username": "Leave empty if the modem only asks for a password.",
+          "password": "Current password for the modem's local interface."
         }
       },
       "reconfigure": {
@@ -24,6 +34,9 @@
         "description": "Enter the modem's new local IP address.",
         "data": {
           "host": "IP address"
+        },
+        "data_description": {
+          "host": "New local modem address reachable from Home Assistant."
         }
       }
     },
@@ -52,6 +65,15 @@
           "upstream_power_max": "Maximum upstream power (dBmV)",
           "verbose_diagnostics": "Verbose diagnostics",
           "language": "Integration language"
+        },
+        "data_description": {
+          "scan_interval": "How often to request modem data, from 5 to 3600 seconds.",
+          "downstream_power_min": "Lowest acceptable downstream power.",
+          "downstream_power_max": "Highest acceptable downstream power.",
+          "downstream_snr_min": "Lowest acceptable downstream signal-to-noise ratio.",
+          "upstream_power_max": "Highest acceptable upstream power.",
+          "verbose_diagnostics": "Include channel details in diagnostic attributes.",
+          "language": "Language used by this integration's entities and messages."
         }
       }
     }
