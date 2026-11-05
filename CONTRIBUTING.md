@@ -10,7 +10,7 @@
 
 - Use Python 3.14, the version used by the test job in CI
 - Install test dependencies: `python -m pip install -r requirements_test.txt`
-- Run tests: `python -m pytest -q`
+- Run tests with full config-flow coverage: `python -m pytest -q --cov=custom_components.ziggo_modem.config_flow --cov-report=term-missing --cov-fail-under=100`
 - Install pre-commit if needed: `python -m pip install pre-commit`
 - Run all hooks: `pre-commit run --all-files`
 - Check `git status` afterward; formatting hooks may update files
