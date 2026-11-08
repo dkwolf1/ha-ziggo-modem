@@ -17,6 +17,8 @@
 
 Local Home Assistant integration for Ziggo cable modems (Sagemcom).
 
+[Wiki: readings, alerts and troubleshooting](wiki/English.md)
+
 This integration gives insight into your DOCSIS connection, including signal
 quality, stability, error counters and network status. It works locally and
 does not use SmartWifi Web or any external Ziggo website.
@@ -214,6 +216,8 @@ restart is estimated from the uptime reported by the modem.
 ## Nederlands
 
 Lokale Home Assistant integratie voor Ziggo kabelmodems (Sagemcom).
+
+[Wiki: metingen, meldingen en probleemoplossing](wiki/Nederlands.md)
 
 Deze integratie geeft inzicht in je DOCSIS-verbinding, zoals signaalkwaliteit,
 stabiliteit, fouttellers en netwerkstatus. De integratie werkt lokaal en gebruikt
