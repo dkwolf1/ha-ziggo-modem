@@ -23,6 +23,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_UPSTREAM_POWER_MAX,
     DOMAIN,
+    ENDPOINT_STATE,
 )
 from .data import ZiggoModemConfigEntry
 from .i18n import translate
@@ -108,6 +109,11 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Return the status of the most recent endpoint fetch."""
         return self._endpoint_status
 
+    @property
+    def endpoint_errors(self) -> dict[str, str]:
+        """Return error codes from the most recent endpoint fetch."""
+        return self.api.last_endpoint_errors
+
     def endpoints_available(self, endpoints: Collection[str]) -> bool:
         """Keep cached readings available through brief endpoint failures."""
         now = datetime.now(UTC)
@@ -120,6 +126,12 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
             for endpoint in endpoints
         )
+
+    def fresh_endpoint_sample_time(self, endpoint: str) -> datetime | None:
+        """Return the sample time only when the endpoint supplied fresh data."""
+        if self._endpoint_status.get(endpoint) != "ok":
+            return None
+        return self._last_endpoint_success.get(endpoint)
 
     @property
     def signal_thresholds(self) -> dict[str, float]:
@@ -295,6 +307,7 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return data
 
         except ZiggoModemAuthError as err:
+            self._endpoint_status = self.api.last_endpoint_status
             await self._async_record_failed_update(connection_unavailable=False)
             raise ConfigEntryAuthFailed(
                 f"Authentication failed for Ziggo modem at {self.api.host}"
@@ -338,7 +351,11 @@ class ZiggoModemDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._history["connection_available"] = True
             changed = True
 
-        uptime = data.get("state", {}).get("cablemodem", {}).get("upTime")
+        uptime = (
+            data.get(ENDPOINT_STATE, {}).get("cablemodem", {}).get("upTime")
+            if self._endpoint_status.get(ENDPOINT_STATE) == "ok"
+            else None
+        )
         try:
             uptime_seconds = float(uptime)
         except (TypeError, ValueError):

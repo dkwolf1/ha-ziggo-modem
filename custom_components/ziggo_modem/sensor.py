@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import time
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Any, Callable
+from datetime import datetime
+from typing import Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -465,10 +465,10 @@ def signal_quality_advice(
     return evaluate_signal_quality(data, language, thresholds)["advies"]
 
 
-DELTA_RATE_SENSOR_KEYS = {
-    "ofdm_errors_delta_rate",
-    "scqam_errors_delta_rate",
-    "t3_timeouts_delta_rate",
+DELTA_RATE_ENDPOINTS = {
+    "ofdm_errors_delta_rate": ENDPOINT_DOWNSTREAM,
+    "scqam_errors_delta_rate": ENDPOINT_DOWNSTREAM,
+    "t3_timeouts_delta_rate": ENDPOINT_UPSTREAM,
 }
 
 STATE_ENDPOINTS = frozenset({ENDPOINT_STATE})
@@ -748,7 +748,6 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
         self._attr_unique_id = f"{entry_id}_{description.key}"
         self._last_delta_total = None
         self._last_delta_time = None
-        self._last_data_id = None
         self._cached_native_value = None
 
     @property
@@ -814,48 +813,39 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
 
             value = self.entity_description.value_fn(self.coordinator.data)
 
-            if self.entity_description.key in DELTA_RATE_SENSOR_KEYS:
-                return self._calculate_delta_rate(value)
+            if endpoint := DELTA_RATE_ENDPOINTS.get(self.entity_description.key):
+                sample_time = self.coordinator.fresh_endpoint_sample_time(endpoint)
+                return self._calculate_delta_rate(value, sample_time)
 
             return value
         except Exception:
             return None
 
-    def _calculate_delta_rate(self, current_total):
-        data_id = id(self.coordinator.data)
-
-        if self._last_data_id == data_id:
+    def _calculate_delta_rate(
+        self, current_total: int | None, sample_time: datetime | None
+    ) -> int | None:
+        if sample_time is None or (
+            self._last_delta_time is not None and sample_time <= self._last_delta_time
+        ):
             return self._cached_native_value
-
-        self._last_data_id = data_id
-        now = time.monotonic()
 
         if current_total is None:
             self._cached_native_value = None
             return None
 
-        if self._last_delta_total is None or self._last_delta_time is None:
-            self._last_delta_total = current_total
-            self._last_delta_time = now
-            self._cached_native_value = 0
-            return 0
-
-        elapsed_seconds = now - self._last_delta_time
-        delta = current_total - self._last_delta_total
-
-        if delta < 0:
-            self._last_delta_total = current_total
-            self._last_delta_time = now
-            self._cached_native_value = 0
-            return 0
+        rate_per_hour = 0
+        if (
+            self._last_delta_total is not None
+            and self._last_delta_time is not None
+            and current_total >= self._last_delta_total
+        ):
+            elapsed_seconds = (sample_time - self._last_delta_time).total_seconds()
+            rate_per_hour = round(
+                (current_total - self._last_delta_total) * 3600 / elapsed_seconds
+            )
 
         self._last_delta_total = current_total
-        self._last_delta_time = now
-
-        if elapsed_seconds <= 0:
-            return self._cached_native_value or 0
-
-        rate_per_hour = round(delta / (elapsed_seconds / 3600))
+        self._last_delta_time = sample_time
         self._cached_native_value = rate_per_hour
         return rate_per_hour
 
@@ -874,6 +864,7 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
                 "signal_thresholds": self.coordinator.signal_thresholds,
                 "problem_history": self.coordinator.problem_history,
                 "endpoint_status": endpoint_status,
+                "endpoint_errors": self.coordinator.endpoint_errors,
                 "failed_endpoints": [
                     endpoint
                     for endpoint, status in endpoint_status.items()

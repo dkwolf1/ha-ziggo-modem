@@ -76,6 +76,7 @@ async def async_get_config_entry_diagnostics(
             "max_failures": coordinator.max_failures,
             "update_interval_seconds": coordinator.update_interval_seconds,
             "endpoint_status": coordinator.endpoint_status,
+            "endpoint_errors": coordinator.endpoint_errors,
             "paused": coordinator.is_paused,
             "verbose_diagnostics": coordinator.verbose_diagnostics,
             "language": coordinator.language,

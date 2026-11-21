@@ -10,6 +10,8 @@
 
 - Use Python 3.14, the version used by the test job in CI
 - Install test dependencies: `python -m pip install -r requirements_test.txt`
+- To test the minimum supported Core version, use a separate environment
+  and install `requirements_test_minimum.txt` instead.
 - Run tests with full config-flow coverage: `python -m pytest -q --cov=custom_components.ziggo_modem.config_flow --cov-report=term-missing --cov-fail-under=100`
 - Install pre-commit if needed: `python -m pip install pre-commit`
 - Run all hooks: `pre-commit run --all-files`
@@ -17,6 +19,13 @@
 - Follow Home Assistant coding standards and test on real hardware if possible
 
 Pull requests also run tests, pre-commit, Hassfest and HACS validation in CI.
+The test matrix checks the minimum supported Core version and the pinned
+current release. Update the latter in the workflow and `requirements_test.txt`
+together when moving to a newer Core version.
+
+Modem fixtures in `tests/fixtures` use synthetic values in representative
+response structures. Do not commit raw diagnostics, credentials or device
+identifiers.
 
 ## Pull Requests
 

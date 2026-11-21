@@ -25,7 +25,7 @@ good internet experience.
 
 | Entity | Meaning |
 | --- | --- |
-| **API Status** | Whether local API polling works. Check its `endpoint_status`, `failed_endpoints`, `consecutive_failures` and `last_successful_update` attributes. This is not the internet status. |
+| **API Status** | Whether local API polling works. Check its `endpoint_status`, `failed_endpoints` and `consecutive_failures` attributes. For the timestamp, see the separate **Last successful update** sensor. This is not the internet status. |
 | **Signal Quality** | Calculated DOCSIS score and label. Its `reason`, `score` and measurement attributes explain the label. |
 | **Issue Classification** | One *possible* cause selected by priority from modem-reported values. It is not an official Ziggo outage report. |
 
@@ -128,7 +128,7 @@ so it need not switch on for every Moderate/Poor Signal Quality result.
 - **Downstream Channels / Locked Downstream Channels / Upstream Channels** count channels reported by the modem; a missing list can look like zero.
 - **DS Errors SC-QAM / DS Errors OFDM / Upstream T3 Timeouts** are sums of modem-reported counters. A total can persist until the modem resets its counters; it is not necessarily a new incident.
 - **OFDM Errors per hour / SC-QAM Errors per hour / T3 Timeouts per hour** divide total counters by modem uptime (with a one-minute minimum denominator). They are *averages since uptime began*, not the rate during the last hour.
-- **Current OFDM Errors per hour / Current SC-QAM Errors per hour / Current T3 Timeouts per hour** calculate the change between successful readings and scale it to an hour. They start at zero, reset to zero when the underlying counter decreases, and are disabled by default in the entity registry. Short polling windows can produce large extrapolated values.
+- **Current OFDM Errors per hour / Current SC-QAM Errors per hour / Current T3 Timeouts per hour** scale the counter change between two fresh readings from the same endpoint to an hour. During a brief endpoint failure they keep the last rate while the cache is valid. After recovery, the calculation uses the full time between successful readings. They start at zero on the first fresh reading, reset to zero if the counter decreases, and are disabled by default. Short polling windows can produce large extrapolated values.
 - **Download Profile / Upload Profile** are the first matching service flow's configured `maxTrafficRate`, converted to Mbit/s. They are **not** measured download/upload speed.
 - **Modem Status / Software Status** display raw status strings supplied by the modem. Their meaning can vary by firmware. **Uptime** is also modem-reported.
 - **Last Modem Restart** is an estimate from current time minus reported uptime. It is not a timestamp returned directly by the modem.
@@ -142,6 +142,14 @@ cached reading, and `Paused` when polling is intentionally paused. The
 `endpoint_status` attribute lists each endpoint as `ok` or `failed` on its
 most recent fetch. The `primary_downstream` endpoint is checked but has no
 dedicated entity in the current integration.
+
+The `endpoint_errors` attribute and downloaded diagnostics show the reason
+for each endpoint that failed in the latest poll: `timeout`, `network_error`,
+`authentication`, `invalid_response`, or an HTTP status such as `http_503`.
+`request_error` and `unexpected_error` are fallback codes. An invalid
+response is one that cannot be read as JSON or does not match the expected
+basic structure. Optional modem fields are not required. Raw response bodies
+are not included in these error codes.
 
 For an isolated endpoint failure, dependent entities may retain their last
 successful value for **less than 10 minutes**; other endpoints can continue

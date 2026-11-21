@@ -4,9 +4,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import voluptuous as vol
+from homeassistant import config_entries, setup
 from homeassistant.config_entries import SOURCE_RECONFIGURE, SOURCE_USER
 from homeassistant.data_entry_flow import FlowResultType
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.ziggo_modem.api import ZiggoModemApiError, ZiggoModemAuthError
 from custom_components.ziggo_modem.config_flow import _create_api
@@ -24,6 +24,29 @@ from custom_components.ziggo_modem.const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
+from tests.ha_compat import HAS_OFFICIAL_TEST_PLUGIN, MockConfigEntry
+
+
+@pytest.fixture(autouse=True)
+def isolate_config_flow_dependency_setup(hass):
+    """Keep package and dependency setup out of the official config-flow tests."""
+    if not HAS_OFFICIAL_TEST_PLUGIN:
+        yield
+        return
+
+    original = setup.async_process_deps_reqs
+
+    async def process_dependencies(test_hass, config, integration):
+        if test_hass is not hass or integration.domain != DOMAIN:
+            return await original(test_hass, config, integration)
+        assert not integration.dependencies
+        assert not integration.requirements
+
+    with (
+        patch.object(config_entries, "async_process_deps_reqs", process_dependencies),
+        patch.object(setup, "async_process_deps_reqs", process_dependencies),
+    ):
+        yield
 
 
 @pytest.fixture

@@ -24,7 +24,7 @@ oorzaak. Een goede score garandeert geen probleemloze internetervaring.
 
 | Entiteit | Betekenis |
 | --- | --- |
-| **API Status** | Of het uitlezen van de lokale modem-API lukt. Bekijk `endpoint_status`, `failed_endpoints`, `consecutive_failures` en `last_successful_update`. Dit is niet de internetstatus. |
+| **API Status** | Of het uitlezen van de lokale modem-API lukt. Bekijk de attributen `endpoint_status`, `failed_endpoints` en `consecutive_failures`. Het tijdstip staat in de aparte sensor **Laatste succesvolle update**. Dit is niet de internetstatus. |
 | **Signaalkwaliteit** | Berekende DOCSIS-score en label. De attributen `reden`, `score` en meetwaarden verklaren het label. |
 | **Storingsclassificatie** | Een *mogelijke* oorzaak, gekozen volgens een prioriteitsvolgorde. Geen officiele Ziggo-storingsmelding. |
 
@@ -130,7 +130,7 @@ gaan.
 - **Downstream Kanalen / Downstream Gelocked / Upstream Kanalen** tellen wat het modem meldt. Een ontbrekende kanaallijst kan als nul verschijnen.
 - **DS Errors SC-QAM / DS Errors OFDM / Upstream T3 Timeouts** zijn sommen van modemtellers. Een totaal kan blijven staan tot de modemcounter wordt gereset; het hoeft geen nieuwe gebeurtenis te zijn.
 - **OFDM Errors per uur / SC-QAM Errors per uur / T3 Timeouts per uur** delen cumulatieve tellers door de modem-uptime (minimale noemer een minuut). Het zijn *gemiddelden sinds de uptime begon*, niet over alleen het laatste uur.
-- **OFDM Errors actueel per uur / SC-QAM Errors actueel per uur / T3 Timeouts actueel per uur** berekenen het verschil tussen succesvolle uitlezingen en schalen dat naar een uur. De eerste waarde is nul; als de teller daalt wordt de waarde weer nul. Deze sensoren staan standaard uit in het entiteitenregister. Bij een korte meetperiode kan een omgerekende uurwaarde groot lijken.
+- **OFDM Errors actueel per uur / SC-QAM Errors actueel per uur / T3 Timeouts actueel per uur** rekenen het tellerverschil tussen twee verse uitlezingen van hetzelfde endpoint om naar een uur. Bij een korte endpointfout blijft het vorige tempo staan zolang de cache geldig is. Na herstel telt de hele tijd tussen de geslaagde uitlezingen mee. De eerste verse waarde is nul; bij een dalende teller wordt de waarde weer nul. Deze sensoren staan standaard uit. Bij een korte meetperiode kan de omgerekende uurwaarde groot lijken.
 - **Downloadprofiel / Uploadprofiel** zijn de ingestelde `maxTrafficRate` van de eerste passende serviceflow, omgerekend naar Mbit/s. Dit is **geen** gemeten downloadsnelheid of uploadsnelheid.
 - **Modem Status / Software Status** tonen ruwe statuswaarden van het modem. Hun precieze betekenis kan per firmware verschillen. Ook **Uptime** komt van het modem.
 - **Laatste Modemherstart** is een schatting op basis van tijdstip nu minus de gemelde uptime; het modem levert deze datum niet rechtstreeks aan.
@@ -144,6 +144,14 @@ en `Gepauzeerd` wanneer het pollen bewust is stilgezet. Het attribuut
 `endpoint_status` toont per endpoint `ok` of `failed` bij de laatste poging.
 `primary_downstream` wordt wel uitgelezen maar heeft momenteel geen eigen
 entiteit.
+
+Het attribuut `endpoint_errors` en de gedownloade diagnostiek tonen per
+endpoint waarom de laatste uitlezing faalde: `timeout`, `network_error`,
+`authentication`, `invalid_response` of een HTTP-status zoals `http_503`.
+`request_error` en `unexpected_error` zijn algemene foutcodes. Een ongeldig
+antwoord is geen leesbare JSON of heeft niet de verwachte basisstructuur.
+Optionele modemvelden zijn niet verplicht. De foutcodes bevatten geen
+ruwe modemantwoorden.
 
 Bij een fout van een enkel endpoint houden afhankelijke entiteiten hun laatste
 geslaagde waarde **minder dan 10 minuten** vast; andere endpoints kunnen

@@ -8,9 +8,42 @@ import aiohttp
 
 _LOGGER = logging.getLogger(__name__)
 
+_POLL_RESPONSE_FIELDS = {
+    "state": ("cablemodem", dict),
+    "downstream": ("downstream", dict),
+    "primary_downstream": ("channel", dict),
+    "upstream": ("upstream", dict),
+    "serviceflows": ("serviceFlows", list),
+    "softwareupdate": ("softwareUpdate", dict),
+}
+
+
+def _valid_poll_response(endpoint: str, result: Any) -> bool:
+    """Check the expected structure without requiring optional modem fields."""
+    field, field_type = _POLL_RESPONSE_FIELDS[endpoint]
+    if not isinstance(result, dict) or not isinstance(result.get(field), field_type):
+        return False
+
+    payload = result[field]
+    if endpoint in {"downstream", "upstream"}:
+        channels = payload.get("channels", [])
+        return isinstance(channels, list) and all(
+            isinstance(channel, dict) for channel in channels
+        )
+    if endpoint == "serviceflows":
+        return all(
+            isinstance(flow, dict) and isinstance(flow.get("serviceFlow", {}), dict)
+            for flow in payload
+        )
+    return True
+
 
 class ZiggoModemApiError(Exception):
     """Generic Ziggo modem API error."""
+
+    def __init__(self, message: str, *, code: str = "request_error") -> None:
+        super().__init__(message)
+        self.code = code
 
 
 class ZiggoModemAuthError(ZiggoModemApiError):
@@ -40,6 +73,7 @@ class ZiggoModemApi:
         self._token: str | None = None
         self._token_lock = asyncio.Lock()
         self._last_endpoint_status: dict[str, str] = {}
+        self._last_endpoint_errors: dict[str, str] = {}
 
     @property
     def host(self) -> str:
@@ -50,6 +84,21 @@ class ZiggoModemApi:
     def last_endpoint_status(self) -> dict[str, str]:
         """Return the status of the last endpoint fetch."""
         return self._last_endpoint_status
+
+    @property
+    def last_endpoint_errors(self) -> dict[str, str]:
+        """Return safe error codes for failed endpoints in the last poll."""
+        return self._last_endpoint_errors
+
+    @staticmethod
+    async def _read_json(response: aiohttp.ClientResponse) -> Any:
+        """Read JSON without including response bodies in errors."""
+        try:
+            return await response.json()
+        except (aiohttp.ContentTypeError, ValueError) as err:
+            raise ZiggoModemApiError(
+                "Invalid JSON response from modem", code="invalid_response"
+            ) from err
 
     async def async_close(self) -> None:
         """Release the authenticated modem session."""
@@ -77,22 +126,28 @@ class ZiggoModemApi:
                 headers=self._request_headers,
                 timeout=self._timeout,
             ) as response:
-                text = await response.text()
-
                 if response.status in (401, 403):
                     raise ZiggoModemAuthError("Invalid modem credentials")
 
                 if response.status not in (200, 201):
                     raise ZiggoModemApiError(
-                        f"Unexpected login status {response.status}: {text}"
+                        f"Unexpected login status {response.status}",
+                        code=f"http_{response.status}",
                     )
 
-                data = await response.json()
+                data = await self._read_json(response)
 
+        except TimeoutError as err:
+            raise ZiggoModemApiError("Login timed out", code="timeout") from err
         except aiohttp.ClientError as err:
-            raise ZiggoModemApiError(f"Login request failed: {err}") from err
+            raise ZiggoModemApiError("Login request failed", code="network_error") from err
 
-        token = data.get("created", {}).get("token")
+        created = data.get("created", {}) if isinstance(data, dict) else None
+        if not isinstance(created, dict):
+            raise ZiggoModemApiError(
+                "Unexpected modem login response", code="invalid_response"
+            )
+        token = created.get("token")
         if not token:
             raise ZiggoModemAuthError("Login succeeded but no token was returned")
 
@@ -180,23 +235,24 @@ class ZiggoModemApi:
                         json_data=json_data,
                     )
 
-                text = await response.text()
-
                 if response.status in (401, 403):
                     raise ZiggoModemAuthError("Authentication failed")
 
                 if response.status >= 400:
                     raise ZiggoModemApiError(
-                        f"{path} failed: {response.status} - {text}"
+                        f"{path} failed: HTTP {response.status}",
+                        code=f"http_{response.status}",
                     )
 
                 if "application/json" in response.headers.get("Content-Type", ""):
-                    return await response.json()
+                    return await self._read_json(response)
 
-                return text
+                return await response.text()
 
+        except TimeoutError as err:
+            raise ZiggoModemApiError("Modem request timed out", code="timeout") from err
         except aiohttp.ClientError as err:
-            raise ZiggoModemApiError(f"Request failed: {err}") from err
+            raise ZiggoModemApiError("Modem request failed", code="network_error") from err
 
     async def async_get_state(self) -> dict[str, Any]:
         return await self._async_request("GET", "cablemodem/state_")
@@ -230,42 +286,46 @@ class ZiggoModemApi:
     async def async_get_data(self) -> dict[str, Any]:
         """Collect all modem data."""
 
-        tasks = [
-            self.async_get_state(),
-            self.async_get_downstream(),
-            self.async_get_primary_downstream(),
-            self.async_get_upstream(),
-            self.async_get_serviceflows(),
-            self.async_get_softwareupdate(),
-        ]
+        tasks = {
+            "state": self.async_get_state(),
+            "downstream": self.async_get_downstream(),
+            "primary_downstream": self.async_get_primary_downstream(),
+            "upstream": self.async_get_upstream(),
+            "serviceflows": self.async_get_serviceflows(),
+            "softwareupdate": self.async_get_softwareupdate(),
+        }
 
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        keys = [
-            "state",
-            "downstream",
-            "primary_downstream",
-            "upstream",
-            "serviceflows",
-            "softwareupdate",
-        ]
+        results = await asyncio.gather(*tasks.values(), return_exceptions=True)
 
         data: dict[str, Any] = {}
         endpoint_status: dict[str, str] = {}
+        endpoint_errors: dict[str, str] = {}
         auth_error: ZiggoModemAuthError | None = None
 
-        for key, result in zip(keys, results):
-            if isinstance(result, Exception):
-                _LOGGER.debug("Endpoint %s failed: %s", key, result)
-                data[key] = {}
-                endpoint_status[key] = "failed"
-                if isinstance(result, ZiggoModemAuthError):
-                    auth_error = result
+        for key, result in zip(tasks, results, strict=True):
+            if isinstance(result, asyncio.CancelledError):
+                raise result
+            if isinstance(result, ZiggoModemAuthError):
+                auth_error = result
+                code = "authentication"
+            elif isinstance(result, ZiggoModemApiError):
+                code = result.code
+            elif isinstance(result, Exception):
+                code = "unexpected_error"
+            elif not _valid_poll_response(key, result):
+                code = "invalid_response"
             else:
                 data[key] = result
                 endpoint_status[key] = "ok"
+                continue
+
+            _LOGGER.debug("Endpoint %s failed: %s", key, code)
+            data[key] = {}
+            endpoint_status[key] = "failed"
+            endpoint_errors[key] = code
 
         self._last_endpoint_status = endpoint_status
+        self._last_endpoint_errors = endpoint_errors
 
         if auth_error is not None:
             raise auth_error
