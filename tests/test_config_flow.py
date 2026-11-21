@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import voluptuous as vol
+from homeassistant import loader, requirements
 from homeassistant.config_entries import SOURCE_RECONFIGURE, SOURCE_USER
 from homeassistant.data_entry_flow import FlowResultType
 
@@ -23,7 +24,31 @@ from custom_components.ziggo_modem.const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
-from tests.ha_compat import MockConfigEntry
+from tests.ha_compat import HAS_OFFICIAL_TEST_PLUGIN, MockConfigEntry
+
+
+@pytest.fixture(autouse=True)
+def reuse_loaded_integration_for_requirements():
+    """Avoid a second loader lookup in the official test environment."""
+    if not HAS_OFFICIAL_TEST_PLUGIN:
+        yield
+        return
+
+    original = requirements.async_get_integration_with_requirements
+
+    async def get_integration(hass, domain):
+        if domain != DOMAIN:
+            return await original(hass, domain)
+
+        # The integration has no packages to install; use the actual manifest.
+        integration = (await loader.async_get_custom_components(hass))[DOMAIN]
+        assert not integration.requirements
+        return integration
+
+    with patch.object(
+        requirements, "async_get_integration_with_requirements", get_integration
+    ):
+        yield
 
 
 @pytest.fixture
