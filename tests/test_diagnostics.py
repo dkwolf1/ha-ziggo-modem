@@ -2,8 +2,6 @@
 
 from types import SimpleNamespace
 
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-
 from custom_components.ziggo_modem.const import (
     CONF_HOST,
     CONF_PASSWORD,
@@ -13,6 +11,7 @@ from custom_components.ziggo_modem.const import (
 from custom_components.ziggo_modem.diagnostics import (
     async_get_config_entry_diagnostics,
 )
+from tests.ha_compat import MockConfigEntry
 
 
 async def test_diagnostics_redacts_known_sensitive_fields(hass):
@@ -34,7 +33,8 @@ async def test_diagnostics_redacts_known_sensitive_fields(hass):
             consecutive_failures=0,
             max_failures=3,
             update_interval_seconds=60,
-            endpoint_status={"state": "ok"},
+            endpoint_status={"state": "ok", "upstream": "failed"},
+            endpoint_errors={"upstream": "timeout"},
             is_paused=False,
             verbose_diagnostics=False,
             language="en",
@@ -64,4 +64,8 @@ async def test_diagnostics_redacts_known_sensitive_fields(hass):
         "private-token",
     ):
         assert secret not in serialized
-    assert diagnostics["runtime"]["endpoint_status"] == {"state": "ok"}
+    assert diagnostics["runtime"]["endpoint_status"] == {
+        "state": "ok",
+        "upstream": "failed",
+    }
+    assert diagnostics["runtime"]["endpoint_errors"] == {"upstream": "timeout"}

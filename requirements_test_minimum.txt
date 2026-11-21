@@ -1,0 +1,5 @@
+pytest
+pytest-cov
+homeassistant==2026.4.0
+# Pip selects the legacy test plugin release pinned to this Core version.
+pytest-homeassistant-custom-component

@@ -26,7 +26,8 @@ does not use SmartWifi Web or any external Ziggo website.
 ### Features
 
 - Modem status and uptime
-- Modem model, firmware, hardware, serial number and MAC address in device info
+- Device info with model, firmware, hardware revision, serial number and MAC
+  address when available from the modem API
 - Downloadable, privacy-redacted Home Assistant diagnostics
 - Configurable DOCSIS signal thresholds
 - Persistent connection interruption and failed update history
@@ -38,6 +39,7 @@ does not use SmartWifi Web or any external Ziggo website.
 - Download and upload profile detection
 - Last successful update timestamp
 - Per-endpoint API status diagnostics
+- Per-endpoint error codes in API Status and downloaded diagnostics
 - Optional verbose diagnostics with channel details
 
 ### Installation
@@ -45,7 +47,8 @@ does not use SmartWifi Web or any external Ziggo website.
 #### Marketplace (Home Assistant 2026.11 and newer)
 
 1. Go to **Settings > Marketplace**, or open [Ziggo Modem directly](https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkwolf1&repository=ha-ziggo-modem&category=integration).
-2. If prompted, connect GitHub and add this repository as a custom repository.
+2. If the Marketplace does not know this repository yet, add it as a custom
+   repository when prompted.
 3. Install **Ziggo Modem** and restart Home Assistant if requested.
 
 Existing HACS installations are transferred to the Marketplace automatically
@@ -226,7 +229,8 @@ geen SmartWifi Web of externe Ziggo-website.
 ### Functies
 
 - Modemstatus en uptime
-- Modemmodel, firmware, hardware, serienummer en MAC-adres in apparaatinfo
+- Apparaatinfo met modemmodel, firmware, hardwarerevisie, serienummer en
+  MAC-adres als de modem-API deze gegevens levert
 - Downloadbare Home Assistant-diagnostiek met privacyfilter
 - Instelbare DOCSIS-signaalgrenzen
 - Blijvende geschiedenis van onderbrekingen en mislukte updates
@@ -238,6 +242,7 @@ geen SmartWifi Web of externe Ziggo-website.
 - Detectie van download- en uploadprofiel
 - Timestamp van laatste succesvolle update
 - API-status per endpoint
+- Foutcodes per endpoint in API Status en de gedownloade diagnostiek
 - Optionele uitgebreide diagnostiek met kanaaldetails
 
 ### Installatie
@@ -245,7 +250,8 @@ geen SmartWifi Web of externe Ziggo-website.
 #### Marketplace (Home Assistant 2026.11 en nieuwer)
 
 1. Ga naar **Instellingen > Marketplace**, of open [Ziggo Modem direct](https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkwolf1&repository=ha-ziggo-modem&category=integration).
-2. Koppel GitHub en voeg deze repository als aangepaste repository toe als daarom wordt gevraagd.
+2. Kent de Marketplace deze repository nog niet, voeg deze dan toe als
+   aangepaste repository zodra daarom wordt gevraagd.
 3. Installeer **Ziggo Modem** en herstart Home Assistant als daarom wordt gevraagd.
 
 Bestaande HACS-installaties worden bij het bijwerken van Home Assistant

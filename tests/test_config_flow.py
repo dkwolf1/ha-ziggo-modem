@@ -6,7 +6,6 @@ import pytest
 import voluptuous as vol
 from homeassistant.config_entries import SOURCE_RECONFIGURE, SOURCE_USER
 from homeassistant.data_entry_flow import FlowResultType
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.ziggo_modem.api import ZiggoModemApiError, ZiggoModemAuthError
 from custom_components.ziggo_modem.config_flow import _create_api
@@ -24,6 +23,7 @@ from custom_components.ziggo_modem.const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
+from tests.ha_compat import MockConfigEntry
 
 
 @pytest.fixture

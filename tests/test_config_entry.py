@@ -5,7 +5,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant.helpers.update_coordinator import UpdateFailed
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.ziggo_modem import async_migrate_entry
 from custom_components.ziggo_modem.api import ZiggoModemApiError
@@ -19,6 +18,7 @@ from custom_components.ziggo_modem.coordinator import (
     STALE_DATA_GRACE,
     ZiggoModemDataUpdateCoordinator,
 )
+from tests.ha_compat import MockConfigEntry
 
 
 async def test_migration_preserves_effective_connection_settings(hass):
@@ -174,3 +174,51 @@ async def test_complete_failure_keeps_cached_endpoints_until_grace_expires(hass)
         with pytest.raises(UpdateFailed):
             await coordinator._async_update_data()
         assert not coordinator.endpoints_available({"state"})
+
+
+async def test_modem_restart_estimate_ignores_cached_uptime(hass):
+    """Only fresh state data can change the estimated restart time."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_HOST: "192.168.178.1", CONF_PASSWORD: "secret"},
+    )
+    entry.add_to_hass(hass)
+    entry.runtime_data = MagicMock(paused=False)
+    api = MagicMock(host="192.168.178.1")
+    api.async_get_data = AsyncMock()
+    coordinator = ZiggoModemDataUpdateCoordinator(hass, api, entry)
+    first_poll = datetime(2026, 11, 21, 12, tzinfo=UTC)
+    uptime = timedelta(hours=1)
+    initial_state = {"cablemodem": {"upTime": uptime.total_seconds()}}
+    failed_poll = first_poll + timedelta(minutes=6)
+    recovered_poll = failed_poll + timedelta(minutes=1)
+
+    with (
+        patch.object(coordinator._history_store, "async_save", new_callable=AsyncMock),
+        patch("custom_components.ziggo_modem.coordinator.datetime", wraps=datetime) as clock,
+    ):
+        clock.now.return_value = first_poll
+        api.last_endpoint_status = {"state": "ok", "downstream": "ok"}
+        api.async_get_data.return_value = {"state": initial_state, "downstream": {}}
+        coordinator.data = await coordinator._async_update_data()
+        assert coordinator.last_modem_restart == first_poll - uptime
+        assert coordinator.fresh_endpoint_sample_time("state") == first_poll
+
+        clock.now.return_value = failed_poll
+        api.last_endpoint_status = {"state": "failed", "downstream": "ok"}
+        api.async_get_data.return_value = {"state": {}, "downstream": {}}
+        coordinator.data = await coordinator._async_update_data()
+        assert coordinator.data["state"] == initial_state
+        assert coordinator.endpoints_available({"state"})
+        assert coordinator.fresh_endpoint_sample_time("state") is None
+        assert coordinator.fresh_endpoint_sample_time("downstream") == failed_poll
+        assert coordinator.last_modem_restart == first_poll - uptime
+
+        clock.now.return_value = recovered_poll
+        api.last_endpoint_status = {"state": "ok", "downstream": "ok"}
+        api.async_get_data.return_value = {
+            "state": {"cablemodem": {"upTime": 30}},
+            "downstream": {},
+        }
+        await coordinator._async_update_data()
+        assert coordinator.last_modem_restart == recovered_poll - timedelta(seconds=30)
