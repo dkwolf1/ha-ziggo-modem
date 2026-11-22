@@ -23,6 +23,13 @@ This integration gives insight into your DOCSIS connection, including signal
 quality, stability, error counters and network status. It works locally and
 does not use SmartWifi Web or any external Ziggo website.
 
+### Optional Dashboard Card
+
+[Ziggo Modem · Neon](https://github.com/dkwolf1/ziggo-modem-card#english)
+brings this integration's signal quality, connectivity, and DOCSIS readings
+together on a Home Assistant dashboard. The card is installed separately; the
+linked guide covers setup.
+
 ### Features
 
 - Modem status and uptime
@@ -225,6 +232,13 @@ Lokale Home Assistant integratie voor Ziggo kabelmodems (Sagemcom).
 Deze integratie geeft inzicht in je DOCSIS-verbinding, zoals signaalkwaliteit,
 stabiliteit, fouttellers en netwerkstatus. De integratie werkt lokaal en gebruikt
 geen SmartWifi Web of externe Ziggo-website.
+
+### Optionele Dashboardkaart
+
+[Ziggo Modem · Neon](https://github.com/dkwolf1/ziggo-modem-card#nederlands)
+brengt de signaalkwaliteit, verbindingsstatus en DOCSIS-metingen van deze
+integratie samen op een Home Assistant-dashboard. Je installeert de kaart
+apart; de link brengt je naar de installatiehandleiding.
 
 ### Functies
 
