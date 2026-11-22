@@ -1,0 +1,32 @@
+name: Feature request / Verbetering voorstellen
+description: Suggest an improvement to the Ziggo Modem integration.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        You can write in English or Dutch. Je kunt je voorstel in het Nederlands of Engels schrijven.
+
+        Check the [existing issues](https://github.com/dkwolf1/ha-ziggo-modem/issues?q=is%3Aissue) for similar ideas. For changes to the Ziggo Modem Neon dashboard card, use the [card's issue tracker](https://github.com/dkwolf1/ziggo-modem-card/issues).
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: What would you like to do? / Wat wil je kunnen doen?
+      description: Describe what you are trying to accomplish in Home Assistant and where the integration falls short.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested improvement / Voorgestelde verbetering
+      description: Describe how the improvement would work. For a new reading, include its name, unit or an example from the modem interface if available.
+    validations:
+      required: true
+
+  - type: input
+    id: modem
+    attributes:
+      label: Modem model and firmware / Modemmodel en firmware
+      description: Include these if the request depends on specific modem hardware or firmware.
