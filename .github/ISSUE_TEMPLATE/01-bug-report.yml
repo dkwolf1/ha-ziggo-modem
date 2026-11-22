@@ -1,0 +1,65 @@
+name: Bug report / Probleem melden
+description: Report a problem with Ziggo Modem in Home Assistant.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        You can report in English or Dutch. Je kunt je melding in het Nederlands of Engels schrijven.
+
+        Check the [existing issues](https://github.com/dkwolf1/ha-ziggo-modem/issues?q=is%3Aissue) for the same problem. For a problem with the Ziggo Modem Neon dashboard card, use the [card's issue tracker](https://github.com/dkwolf1/ziggo-modem-card/issues).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened? / Wat ging er mis?
+      description: Describe what you expected, what happened, and the steps to reproduce it. Name the affected entities or setup step, if relevant.
+    validations:
+      required: true
+
+  - type: input
+    id: home-assistant-version
+    attributes:
+      label: Home Assistant Core version / versie
+      placeholder: "2026.11.2"
+    validations:
+      required: true
+
+  - type: input
+    id: integration-version
+    attributes:
+      label: Ziggo Modem version / versie
+      placeholder: "1.6.7"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: installation-method
+    attributes:
+      label: Installation method / Installatiemethode
+      options:
+        - Home Assistant Marketplace
+        - HACS
+        - Manual / Handmatig
+        - Unknown / Onbekend
+
+  - type: input
+    id: modem
+    attributes:
+      label: Modem model and firmware / Modemmodel en firmware
+      description: You can find these on the modem device page in Home Assistant when available.
+      placeholder: Sagemcom model number and firmware version, if known
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / Relevante logregels
+      description: Paste lines from Settings → System → Logs around the time the problem occurred. Remove passwords, tokens, IP addresses, MAC addresses and serial numbers before posting.
+      render: text
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics / Diagnostiek
+      description: |
+        In Home Assistant, go to Settings → Devices & services → Ziggo Modem → ⋮ → Download diagnostics. Review the JSON for sensitive data before attaching it here. If the integration could not be set up, you can leave this field empty.
