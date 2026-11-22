@@ -34,7 +34,7 @@ from .const import (
     LANGUAGE_NL,
 )
 from .data import ZiggoModemConfigEntry
-from .entity import ZiggoModemBaseEntity
+from .entity import ZiggoModemBaseEntity, modem_docsis_version
 from .i18n import translate
 
 PARALLEL_UPDATES = 0
@@ -851,6 +851,10 @@ class ZiggoModemSensor(ZiggoModemBaseEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self):
+        if self.entity_description.key == "status":
+            version = modem_docsis_version(self.coordinator.data or {})
+            return {"docsis_version": version} if version else None
+
         if self.entity_description.key == "api_status":
             endpoint_status = self.coordinator.endpoint_status
 
