@@ -23,6 +23,9 @@ The test matrix checks the minimum supported Core version and the pinned
 current release. Update the latter in the workflow and `requirements_test.txt`
 together when moving to a newer Core version.
 
+The `Compatibility` check requires both the HACS check and the full Core
+test matrix to pass. Keep this job name stable for the GitHub ruleset.
+
 Modem fixtures in `tests/fixtures` use synthetic values in representative
 response structures. Do not commit raw diagnostics, credentials or device
 identifiers.
