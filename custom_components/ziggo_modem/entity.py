@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -23,6 +24,29 @@ def _first_text(
             value = source.get(key)
             if value is not None and str(value).strip():
                 return str(value).strip()
+    return None
+
+
+def _device_info_sources(data: Mapping[str, Any]) -> tuple[Mapping[str, Any], ...]:
+    state = data.get("state")
+    update = data.get("softwareupdate")
+    sources = []
+    if isinstance(state, Mapping):
+        sources.extend(state.get(key) for key in ("cablemodem", "system", "device"))
+    if isinstance(update, Mapping):
+        sources.append(update.get("softwareUpdate"))
+    return tuple(source for source in sources if isinstance(source, Mapping))
+
+
+def modem_docsis_version(data: Mapping[str, Any]) -> str | None:
+    """Return the version explicitly reported by the modem, when available."""
+    for source in _device_info_sources(data):
+        version = source.get("docsisVersion")
+        match = re.fullmatch(
+            r"(?:DOCSIS\s*)?([0-9]+(?:\.[0-9]+)*)", str(version).strip(), re.IGNORECASE
+        )
+        if match:
+            return match[1]
     return None
 
 
@@ -61,17 +85,7 @@ class ZiggoModemBaseEntity(CoordinatorEntity[ZiggoModemDataUpdateCoordinator]):
     def device_info(self) -> DeviceInfo:
         """Return device info for the Ziggo modem."""
         data = self.coordinator.data or {}
-        state = data.get("state", {})
-        cablemodem = state.get("cablemodem", {})
-        system = state.get("system", {})
-        device = state.get("device", {})
-        software_update = data.get("softwareupdate", {}).get("softwareUpdate", {})
-
-        sources = tuple(
-            source
-            for source in (cablemodem, system, device, software_update)
-            if isinstance(source, Mapping)
-        )
+        sources = _device_info_sources(data)
 
         manufacturer = _first_text(
             sources,
@@ -96,11 +110,9 @@ class ZiggoModemBaseEntity(CoordinatorEntity[ZiggoModemDataUpdateCoordinator]):
             sources,
             ("hardwareVersion", "hardwareRevision", "hwVersion"),
         )
-        docsis = _first_text(sources, ("docsisVersion",))
-
         if not model:
             model = "SmartWifi modem"
-            if docsis:
+            if docsis := modem_docsis_version(data):
                 model = f"{model} (DOCSIS {docsis})"
 
         identifiers = {
