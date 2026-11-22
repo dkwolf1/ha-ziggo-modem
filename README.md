@@ -9,7 +9,7 @@
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://hacs.xyz)
 
 [![Maintained](https://img.shields.io/badge/maintained-yes-brightgreen?style=for-the-badge)]()
-[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.4%2B-blue?style=for-the-badge)](https://www.home-assistant.io/)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.7%2B-blue?style=for-the-badge)](https://www.home-assistant.io/)
 
 ---
 
@@ -50,6 +50,8 @@ linked guide covers setup.
 - Optional verbose diagnostics with channel details
 
 ### Installation
+
+Requires Home Assistant Core 2026.7.0 or newer.
 
 #### Marketplace (Home Assistant 2026.11 and newer)
 
@@ -105,6 +107,13 @@ Enter:
 The integration requires direct local access to the modem interface/API. The
 local modem IP must be reachable from Home Assistant. SmartWifi Web/cloud login
 is not used.
+
+**Local HTTPS:** The integration uses HTTPS but does not verify the modem's
+certificate during setup or normal operation, to support modems with
+self-signed certificates. The connection is encrypted, but Home Assistant
+cannot verify that it is talking to your modem. Use the integration only on
+a trusted local network and do not expose the modem's management interface
+to the internet.
 
 ### Options
 
@@ -261,6 +270,8 @@ apart; de link brengt je naar de installatiehandleiding.
 
 ### Installatie
 
+Vereist Home Assistant Core 2026.7.0 of nieuwer.
+
 #### Marketplace (Home Assistant 2026.11 en nieuwer)
 
 1. Ga naar **Instellingen > Marketplace**, of open [Ziggo Modem direct](https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkwolf1&repository=ha-ziggo-modem&category=integration).
@@ -317,6 +328,13 @@ Voer in:
 De integratie vereist directe lokale toegang tot de modeminterface/API. Het
 lokale modem-IP moet bereikbaar zijn vanaf Home Assistant. SmartWifi Web of
 cloud-login wordt niet gebruikt.
+
+**Lokale HTTPS-verbinding:** De integratie gebruikt HTTPS, maar controleert het
+modemcertificaat niet bij het instellen of tijdens normaal gebruik. Dit
+ondersteunt modems met een zelfondertekend certificaat. De verbinding is
+versleuteld, maar Home Assistant kan niet controleren of het met jouw modem
+praat. Gebruik de integratie alleen op een vertrouwd lokaal netwerk en stel
+de beheerinterface van het modem niet open voor internet.
 
 ### Opties
 

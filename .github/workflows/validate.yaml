@@ -13,27 +13,27 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Run pre-commit
-        uses: pre-commit/action@v3.0.1
+        uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
 
   hassfest:
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Hassfest validation
-        uses: home-assistant/actions/hassfest@master
+        uses: home-assistant/actions/hassfest@07f46fd2e19967768b5fd3000f91f857452b767c # master
 
   hacs:
     runs-on: ubuntu-latest
 
     steps:
       - name: HACS validation
-        uses: hacs/action@main
+        uses: hacs/action@1ebf01c408f29afcb6406bd431bc98fd8cbb15aa # main
         with:
           category: integration
 
@@ -44,17 +44,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - home_assistant: "2026.4.0"
+          - home_assistant: "2026.7.0"
             requirements: requirements_test_minimum.txt
           - home_assistant: "2026.11.2"
             requirements: requirements_test.txt
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: "3.14"
           cache: pip
@@ -72,10 +72,25 @@ jobs:
       - name: Run tests
         run: python -m pytest -q --cov=custom_components.ziggo_modem.config_flow --cov-report=term-missing --cov-fail-under=100
 
+  compatibility:
+    name: Compatibility
+    runs-on: ubuntu-latest
+    needs: [hacs, tests]
+    if: ${{ always() }}
+    permissions: {}
+    steps:
+      - name: Require HACS and all Home Assistant tests to succeed
+        env:
+          HACS_RESULT: ${{ needs.hacs.result }}
+          TESTS_RESULT: ${{ needs.tests.result }}
+        run: |
+          printf 'HACS: %s\nHome Assistant test matrix: %s\n' "$HACS_RESULT" "$TESTS_RESULT"
+          test "$HACS_RESULT" = success && test "$TESTS_RESULT" = success
+
   dependabot-auto-merge:
     name: Dependabot auto-merge
     runs-on: ubuntu-latest
-    needs: [ruff-and-precommit, hassfest, hacs, tests]
+    needs: [ruff-and-precommit, hassfest, compatibility]
     if: >-
       github.event_name == 'pull_request' &&
       github.event.pull_request.user.login == 'dependabot[bot]' &&
