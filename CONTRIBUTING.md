@@ -23,8 +23,14 @@ The test matrix checks the minimum supported Core version and the pinned
 current release. Update the latter in the workflow and `requirements_test.txt`
 together when moving to a newer Core version.
 
-The `Compatibility` check requires both the HACS check and the full Core
-test matrix to pass. Keep this job name stable for the GitHub ruleset.
+The `Compatibility` check requires the HACS check, the full Core test matrix
+and the dashboard card checks to pass. Keep this job name stable for the GitHub
+ruleset.
+
+The source and image for the bundled dashboard card live in
+`custom_components/ziggo_modem/www/`. Keep them together so the module can load
+the image from its own URL. Run the card tests with Node.js 24 using
+`node --test tests/card/ziggo-modem-card.test.cjs`.
 
 Modem fixtures in `tests/fixtures` use synthetic values in representative
 response structures. Do not commit raw diagnostics, credentials or device

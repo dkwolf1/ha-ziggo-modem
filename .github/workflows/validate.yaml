@@ -48,6 +48,7 @@ jobs:
             requirements: requirements_test_minimum.txt
           - home_assistant: "2026.11.2"
             requirements: requirements_test.txt
+            pip_no_binary: dbus-fast
 
     steps:
       - name: Check out code
@@ -61,6 +62,10 @@ jobs:
           cache-dependency-path: ${{ matrix.requirements }}
 
       - name: Install test dependencies
+        env:
+          # The compiled dbus-fast wheel can fail during the BlueZ test-plugin import.
+          PIP_NO_BINARY: ${{ matrix.pip_no_binary || ':none:' }}
+          SKIP_CYTHON: "1"
         run: python -m pip install -r "${{ matrix.requirements }}"
 
       - name: Verify Home Assistant version
@@ -72,20 +77,37 @@ jobs:
       - name: Run tests
         run: python -m pytest -q --cov=custom_components.ziggo_modem.config_flow --cov-report=term-missing --cov-fail-under=100
 
+  card:
+    name: Dashboard card
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - name: Validate the dashboard card
+        run: |
+          node --input-type=module --check < custom_components/ziggo_modem/www/ziggo-modem-card.js
+          node --test tests/card/ziggo-modem-card.test.cjs
+
   compatibility:
     name: Compatibility
     runs-on: ubuntu-latest
-    needs: [hacs, tests]
+    needs: [hacs, tests, card]
     if: ${{ always() }}
     permissions: {}
     steps:
-      - name: Require HACS and all Home Assistant tests to succeed
+      - name: Require HACS, Home Assistant tests and dashboard card checks to succeed
         env:
           HACS_RESULT: ${{ needs.hacs.result }}
           TESTS_RESULT: ${{ needs.tests.result }}
+          CARD_RESULT: ${{ needs.card.result }}
         run: |
-          printf 'HACS: %s\nHome Assistant test matrix: %s\n' "$HACS_RESULT" "$TESTS_RESULT"
-          test "$HACS_RESULT" = success && test "$TESTS_RESULT" = success
+          printf 'HACS: %s\nHome Assistant test matrix: %s\nDashboard card: %s\n' "$HACS_RESULT" "$TESTS_RESULT" "$CARD_RESULT"
+          test "$HACS_RESULT" = success && test "$TESTS_RESULT" = success && test "$CARD_RESULT" = success
 
   dependabot-auto-merge:
     name: Dependabot auto-merge
