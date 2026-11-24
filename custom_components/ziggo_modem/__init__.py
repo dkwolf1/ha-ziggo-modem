@@ -1,7 +1,13 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+from homeassistant.components import frontend
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.typing import ConfigType
+from homeassistant.loader import async_get_integration
 
 from .api import ZiggoModemApi
 from .const import (
@@ -12,10 +18,27 @@ from .const import (
     CONF_VERBOSE_DIAGNOSTICS,
     DEFAULT_LANGUAGE,
     DEFAULT_VERBOSE_DIAGNOSTICS,
+    DOMAIN,
     PLATFORMS,
 )
 from .coordinator import ZiggoModemDataUpdateCoordinator
 from .data import ZiggoModemConfigEntry, ZiggoModemRuntimeData
+
+
+async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:
+    """Publish the bundled dashboard card once for this integration."""
+    if frontend.DOMAIN not in hass.config.components:
+        return True
+
+    integration = await async_get_integration(hass, DOMAIN)
+    url_path = f"/{DOMAIN}"
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig(url_path, str(Path(__file__).parent / "www"), False)]
+    )
+    frontend.add_extra_js_url(
+        hass, f"{url_path}/ziggo-modem-card.js?v={integration.version}"
+    )
+    return True
 
 
 async def async_migrate_entry(

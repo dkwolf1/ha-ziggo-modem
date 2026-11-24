@@ -25,10 +25,30 @@ does not use SmartWifi Web or any external Ziggo website.
 
 ### Optional Dashboard Card
 
-[Ziggo Modem · Neon](https://github.com/dkwolf1/ziggo-modem-card#english)
-brings this integration's signal quality, connectivity, and DOCSIS readings
-together on a Home Assistant dashboard. The card is installed separately; the
-linked guide covers setup.
+**Ziggo Modem · Neon** brings signal quality, connectivity, and DOCSIS readings
+together on your dashboard. Starting with Ziggo Modem **v1.7.0**, the integration
+includes the card and registers its JavaScript module automatically.
+
+1. Install or update Ziggo Modem, then restart Home Assistant and refresh your
+   browser.
+2. Edit your dashboard, select **Add card**, and choose **Ziggo Modem · Neon**.
+   The card editor lets you select a modem, change the layout and choose tiles.
+3. If you installed the standalone card through Marketplace, uninstall the
+   standalone package there. If its old `ziggo-modem-card.js` entry is still
+   present, remove it from **Settings → Dashboards → Resources** or from your
+   YAML resources. Refresh the browser. Keep your existing dashboard card and
+   its settings.
+
+To add the card using YAML:
+
+```yaml
+type: custom:ziggo-modem-card
+```
+
+The header shows the modem-reported DOCSIS version when available. The optional
+24-hour and 7-day downstream SNR graph uses the Home Assistant Recorder history.
+
+![Ziggo Modem Neon expanded and compact dashboard cards with example values](docs/ziggo-modem-neon.png)
 
 ### Features
 
@@ -244,10 +264,26 @@ geen SmartWifi Web of externe Ziggo-website.
 
 ### Optionele Dashboardkaart
 
-[Ziggo Modem · Neon](https://github.com/dkwolf1/ziggo-modem-card#nederlands)
-brengt de signaalkwaliteit, verbindingsstatus en DOCSIS-metingen van deze
-integratie samen op een Home Assistant-dashboard. Je installeert de kaart
-apart; de link brengt je naar de installatiehandleiding.
+**Ziggo Modem · Neon** brengt signaalkwaliteit, verbindingsstatus en
+DOCSIS-metingen samen op je dashboard. Vanaf Ziggo Modem **v1.7.0** levert de
+integratie de kaart mee en registreert ze de JavaScript-module automatisch.
+
+1. Installeer of update Ziggo Modem, herstart Home Assistant en vernieuw je browser.
+2. Bewerk je dashboard, kies **Kaart toevoegen** en selecteer **Ziggo Modem ·
+   Neon**. In de kaarteditor kies je het modem, de weergave en de tegels.
+3. Had je de losse kaart via Marketplace geïnstalleerd? Verwijder daar het
+   losse pakket. Staat de oude bron `ziggo-modem-card.js` er nog, verwijder die
+   dan onder **Instellingen → Dashboards → Bronnen** of uit je YAML-bronnen.
+   Vernieuw je browser en behoud je bestaande dashboardkaart en instellingen.
+
+Voor een handmatige kaart in YAML:
+
+```yaml
+type: custom:ziggo-modem-card
+```
+
+Bovenaan staat de DOCSIS-versie als het modem die doorgeeft. De optionele grafiek
+toont 24 uur of 7 dagen aan downstream-SNR-metingen uit Home Assistant Recorder.
 
 ### Functies
 

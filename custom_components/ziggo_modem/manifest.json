@@ -1,6 +1,7 @@
 {
   "domain": "ziggo_modem",
   "name": "Ziggo Modem",
+  "after_dependencies": ["frontend"],
   "categories": ["computers_network.routers_network"],
   "codeowners": ["@dkwolf1"],
   "config_flow": true,
@@ -9,5 +10,5 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/dkwolf1/ha-ziggo-modem/issues",
   "requirements": [],
-  "version": "1.6.8"
+  "version": "1.7.0"
 }
