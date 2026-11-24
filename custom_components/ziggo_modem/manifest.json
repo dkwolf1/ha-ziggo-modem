@@ -1,7 +1,7 @@
 {
   "domain": "ziggo_modem",
   "name": "Ziggo Modem",
-  "after_dependencies": ["frontend"],
+  "after_dependencies": ["frontend", "http"],
   "categories": ["computers_network.routers_network"],
   "codeowners": ["@dkwolf1"],
   "config_flow": true,

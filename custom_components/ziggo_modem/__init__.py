@@ -5,6 +5,7 @@ from pathlib import Path
 from homeassistant.components import frontend
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.loader import async_get_integration
@@ -23,6 +24,8 @@ from .const import (
 )
 from .coordinator import ZiggoModemDataUpdateCoordinator
 from .data import ZiggoModemConfigEntry, ZiggoModemRuntimeData
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, _config: ConfigType) -> bool:

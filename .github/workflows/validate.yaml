@@ -48,6 +48,7 @@ jobs:
             requirements: requirements_test_minimum.txt
           - home_assistant: "2026.11.2"
             requirements: requirements_test.txt
+            pip_no_binary: dbus-fast
 
     steps:
       - name: Check out code
@@ -61,6 +62,10 @@ jobs:
           cache-dependency-path: ${{ matrix.requirements }}
 
       - name: Install test dependencies
+        env:
+          # The compiled dbus-fast wheel can fail during the BlueZ test-plugin import.
+          PIP_NO_BINARY: ${{ matrix.pip_no_binary || ':none:' }}
+          SKIP_CYTHON: "1"
         run: python -m pip install -r "${{ matrix.requirements }}"
 
       - name: Verify Home Assistant version
