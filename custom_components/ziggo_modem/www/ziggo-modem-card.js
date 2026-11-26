@@ -81,7 +81,7 @@ const NL = {
   unavailable: "Niet beschikbaar",
   diagnostics: "Diagnostiek",
   close: "Sluiten",
-  history: "Downstream SNR (dB)",
+  history: "Downstream SNR",
   quality_context:
     "Je modem kan online zijn terwijl de metingen op de kabellijn een lagere signaalscore opleveren.",
   quality_reason_unavailable:
@@ -97,11 +97,14 @@ const NL = {
   auto: "Automatisch",
   compact: "Compact",
   expanded: "Uitgebreid",
+  full: "Volledige breedte",
   language: "Taal",
   detect: "Automatisch",
   modem: "Modemafbeelding tonen",
   chart: "SNR-grafiek tonen",
   glow: "Lichteffecten gebruiken",
+  animations: "Animaties tonen",
+  history_period: "Grafiekperiode",
   metrics: "Tegels op de kaart",
   entities: "Geavanceerd: entiteiten handmatig koppelen",
   help: "Sla wijzigingen op met de dashboardeditor.",
@@ -140,7 +143,7 @@ const EN = {
   unavailable: "Unavailable",
   diagnostics: "Diagnostics",
   close: "Close",
-  history: "Downstream SNR (dB)",
+  history: "Downstream SNR",
   quality_context:
     "Your modem can be online while readings on the cable line result in a lower signal score.",
   quality_reason_unavailable:
@@ -156,11 +159,14 @@ const EN = {
   auto: "Automatic",
   compact: "Compact",
   expanded: "Expanded",
+  full: "Full width",
   language: "Language",
   detect: "Automatic",
   modem: "Show modem illustration",
   chart: "Show SNR chart",
   glow: "Enable glow effects",
+  animations: "Show animations",
+  history_period: "Chart period",
   metrics: "Tiles on the card",
   entities: "Advanced: map entity IDs",
   help: "Save changes using the dashboard editor.",
@@ -175,8 +181,6 @@ ha-card { box-sizing:border-box; display:block; height:100%; min-height:0; width
 .shell { box-sizing:border-box; min-height:100%; padding:18px; display:flex; flex-direction:column; gap:13px; position:relative; isolation:isolate; }
 .shell::before { content:""; pointer-events:none; position:absolute; inset:0; z-index:-1; opacity:.85; background:radial-gradient(ellipse at 8% 35%,rgba(255,115,0,.24),transparent 44%),radial-gradient(ellipse at 96% 5%,rgba(255,128,0,.13),transparent 50%); }
 .glow { position:absolute; inset:0; pointer-events:none; z-index:-1; border-radius:25px; box-shadow:inset 0 0 0 1px rgba(255,135,35,.30),inset 0 0 32px rgba(255,123,8,.08); }
-.shell.is-glowing::after { content:""; position:absolute; inset:0; pointer-events:none; border-radius:inherit; box-shadow:inset 0 0 2px 1px rgba(255,154,54,.35); animation:ziggoBreathe 4s ease-in-out infinite; }
-@keyframes ziggoBreathe { 50% {opacity:.45;} }
 .head { display:flex; justify-content:space-between; align-items:center; gap:9px; min-width:0; }
 .identity { display:flex; align-items:center; gap:12px; min-width:0; }
 .brand { flex:none; display:grid; place-items:center; width:42px; height:42px; background:linear-gradient(135deg,#ffae31,#ff6200); border-radius:13px; font-weight:900; color:#16121a; font-size:26px; box-shadow:0 6px 22px rgba(255,115,0,.24); }
@@ -187,8 +191,10 @@ ha-card { box-sizing:border-box; display:block; height:100%; min-height:0; width
 .hardware::before { content:""; position:absolute; bottom:12px; width:140%; height:52%; border-radius:50%; background:#ff6b00; opacity:.24; filter:blur(34px); }
 .hardware img { height:100%; max-width:100%; object-fit:contain; filter:drop-shadow(0 15px 12px rgba(0,0,0,.7)); }
 .gauge-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-width:0; }
-.gauge { --pct:0%; --ring:#4cda74; width:min(100%,202px); aspect-ratio:1; position:relative; display:grid; place-items:center; border-radius:50%; background:conic-gradient(from 225deg,var(--ring) 0 var(--pct),rgba(149,162,173,.16) var(--pct) 75%,transparent 75% 100%); box-shadow:0 0 0 2px rgba(255,255,255,.13),0 0 35px rgba(44,241,95,.13); }
+.gauge { --ring:#4cda74; width:min(100%,202px); aspect-ratio:1; position:relative; display:grid; place-items:center; border-radius:50%; box-shadow:0 0 0 1px rgba(255,255,255,.13),0 0 24px rgba(44,241,95,.09); }
 .gauge::before { content:""; position:absolute; inset:13px; border-radius:50%; background:radial-gradient(circle at 35% 15%,#252830,#090d14 69%); box-shadow:inset 0 0 0 1px rgba(255,255,255,.06); }
+.gauge-ring { position:absolute; inset:0; width:100%; height:100%; fill:none; stroke-width:7; transform:rotate(135deg); }
+.gauge-track { stroke:rgba(149,162,173,.2); } .gauge-progress { stroke:var(--ring); }
 .gauge-inner { position:relative; display:flex; align-items:center; justify-content:center; flex-direction:column; text-align:center; }
 .gauge-overline { font-size:11px; color:#c6ccca; } .gauge-status { font-size:clamp(18px,5cqi,30px); font-weight:800; line-height:1.15; margin:5px 0; }
 .gauge-score { color:#d8e6e3; font-size:12px; font-variant-numeric:tabular-nums; }
@@ -205,14 +211,38 @@ ha-card { box-sizing:border-box; display:block; height:100%; min-height:0; width
 .metric-value { margin-top:5px; font-size:clamp(16px,2.9cqi,22px); line-height:1.2; font-weight:740; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
 .metric-unit { font-size:12px; font-weight:500; color:#c7cfdb; white-space:nowrap; }
 .chart { border-radius:15px; padding:11px 12px 9px; background:rgba(0,0,0,.31); border:1px solid rgba(255,255,255,.12); }
-.chart-head { display:flex; align-items:center; gap:12px; justify-content:space-between; margin-bottom:4px; }
-.chart-title { font-size:12px; font-weight:650; } .chart-select { font:inherit; font-size:11px; background:rgba(255,255,255,.08); color:inherit; border:1px solid #454750; border-radius:8px; padding:4px 6px; }
-.chart-select option { color:#10121b; } .chart-svg { width:100%; height:102px; display:block; overflow:visible; }
+.chart-head { display:flex; align-items:flex-start; gap:8px; justify-content:space-between; margin-bottom:14px; }
+.chart-title { display:block; color:#c6cdd6; font-size:12px; font-weight:600; }
+.chart-current { display:block; margin-top:3px; font-size:22px; font-variant-numeric:tabular-nums; line-height:1.2; }
+.chart-current small { color:#b8c6ce; font-size:12px; font-weight:500; }
+.chart-select { font:inherit; font-size:11px; color:inherit; color-scheme:dark; background:#182229; border:1px solid #454750; border-radius:8px; padding:4px 6px; }
+.chart-grid { display:grid; grid-template-columns:max-content minmax(0,1fr); gap:6px 9px; }
+.chart-axis { color:#aab5c2; font-size:10px; font-variant-numeric:tabular-nums; }
+.chart-y { display:flex; flex-direction:column; justify-content:space-between; text-align:right; line-height:1; margin-block:-5px; }
+.chart-x { grid-column:2; display:flex; justify-content:space-between; gap:6px; white-space:nowrap; }
+.chart-plot { position:relative; min-width:0; height:104px; outline-offset:4px; }
+.chart-svg { width:100%; height:100%; display:block; overflow:visible; pointer-events:none; }
+.chart-guide,.chart-range,.chart-trace { fill:none; }
+.chart-guide { stroke:rgba(190,204,222,.15); }
+.chart-range { stroke:#80cfb0; stroke-opacity:.42; }
+.chart-trace { stroke:#71dfb0; stroke-width:1.25; stroke-linecap:round; stroke-linejoin:round; }
+.chart-latest { position:absolute; width:6px; height:6px; border-radius:50%; background:#a7f6cf; transform:translate(-50%,-50%); pointer-events:none; }
+.chart-latest.is-fresh { animation:ziggoSamplePop .95s ease-out; }
+.chart-latest.is-fresh::after { content:""; position:absolute; inset:-1px; border:2px solid #a7f6cf; border-radius:inherit; animation:ziggoPulse .95s ease-out both; }
+@keyframes ziggoSamplePop { 35% { box-shadow:0 0 12px 4px #8cebbb; } }
+@keyframes ziggoPulse { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(4.2); } }
+.chart-tooltip { position:absolute; z-index:1; top:0; bottom:0; border-left:1px solid rgba(221,240,233,.45); pointer-events:none; }
+.chart-tooltip output { position:absolute; top:0; left:6px; padding:5px 7px; border-radius:6px; background:#18262c; color:#e8f7f0; border:1px solid #51696b; font-size:11px; white-space:nowrap; }
+.chart-tooltip.is-right output { left:auto; right:6px; }
 .chart-empty { display:grid; place-items:center; color:#a4acb8; font-size:12px; height:90px; text-align:center; }
-.chart-label { fill:#9da6b3; font-size:10px; } .chart-guide { stroke:rgba(190,204,222,.15); stroke-width:1; }
 .footer { margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:2px; }
 .footer-left { display:flex; align-items:center; gap:8px; min-width:0; font-size:11px; color:#b8bbca; }
 .dot { display:inline-block; height:8px; width:8px; background:#52db73; border-radius:50%; box-shadow:0 0 8px rgba(69,250,106,.4); flex:none; } .dot.bad { background:#ff656e;box-shadow:0 0 8px rgba(255,101,110,.4); } .dot.muted { background:#8b919e;box-shadow:none; } .dot.warn { background:#ffb044;box-shadow:0 0 8px rgba(255,176,68,.4); }
+.has-motion .dot.good { position:relative; }
+.has-motion .dot.good::after { content:""; position:absolute; inset:0; border:1px solid #79f69c; border-radius:inherit; animation:ziggoOnlinePulse 3s ease-out infinite; }
+.shell.has-motion:not(.no-effects)::after { content:""; position:absolute; inset:0 14px auto; height:3px; pointer-events:none; border-radius:6px; background:linear-gradient(90deg,transparent,#ff9d3c 42%,#ffe1a6 50%,#ff9d3c 58%,transparent) 150% 0 / 45% 100% no-repeat; filter:drop-shadow(0 0 5px #f88e31); animation:ziggoEdgeSweep 5s ease-in-out infinite; }
+@keyframes ziggoOnlinePulse { 0% { opacity:.95; transform:scale(1); } 50%,100% { opacity:0; transform:scale(3); } }
+@keyframes ziggoEdgeSweep { 0% { background-position:-85% 0; opacity:0; } 13%,55% { opacity:1; } 70%,100% { background-position:185% 0; opacity:0; } }
 .small-button { font:inherit; color:#f1f0f4; padding:8px 11px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.09); border-radius:11px; cursor:pointer; font-size:12px; white-space:nowrap; }
 .small-button:hover,.small-button:focus-visible { background:rgba(255,136,0,.25); }
 .alert { border:1px solid rgba(249,185,78,.25); color:#ffcb80; background:rgba(255,130,13,.09); border-radius:9px; padding:11px; font-size:12px; }
@@ -227,11 +257,31 @@ ha-card { box-sizing:border-box; display:block; height:100%; min-height:0; width
 .details { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(132px,100%),1fr)); gap:7px; }
 .details .metric { grid-column:auto; }
 .shell.no-modem .hero { grid-template-columns:minmax(140px,1fr) minmax(160px,1fr); }
-.shell.no-effects .glow,.shell.no-effects::after,.shell.no-effects .hardware::before { display:none; }
-@media(prefers-reduced-motion:reduce) { .shell::after { animation:none!important; } }
+.shell.no-effects .glow,.shell.no-effects .hardware::before { display:none; }
+@media(prefers-reduced-motion:reduce) {
+  .chart-latest.is-fresh { animation:none; }
+  .chart-latest.is-fresh::after,.has-motion .dot.good::after,.shell.has-motion:not(.no-effects)::after { display:none; }
+}
 @container (max-width:620px) { .shell.no-modem .hero {grid-template-columns:1fr;} .shell { padding:13px; gap:10px; } .title { font-size:19px; } .hero { grid-template-columns:120px 1fr; } .hardware { height:150px; } .gauge { width:158px; } .status-stack { grid-column:1/-1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); } .metric { grid-column:span 3; } .metric.wide { grid-column:span 3; } .gauge-status { font-size:22px; } .details { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@container (max-width:380px) { .hero { grid-template-columns:1fr 1fr; gap:5px; } .hardware { height:125px; } .gauge { width:min(100%,137px); } .gauge::before { inset:9px; } .status-stack { grid-template-columns:1fr 1fr; } .status-item { padding:8px; } .status-value { font-size:11px; } .status-label { font-size:10px; } .brand { height:35px; width:35px; font-size:22px; } .metric-value { font-size:16px; } .chart-svg { height:85px; } .footer-left { font-size:10px; } }
+@container (max-width:380px) { .hero { grid-template-columns:1fr 1fr; gap:5px; } .hardware { height:125px; } .gauge { width:min(100%,137px); } .gauge::before { inset:9px; } .status-stack { grid-template-columns:1fr 1fr; } .status-item { padding:8px; } .status-value { font-size:11px; } .status-label { font-size:10px; } .brand { height:35px; width:35px; font-size:22px; } .metric-value { font-size:16px; } .chart-plot { height:88px; } .footer-left { font-size:10px; } }
 .shell.is-compact .hero { grid-template-columns:78px 1fr; } .shell.is-compact .hardware { height:120px; } .shell.is-compact .gauge { width:130px; } .shell.is-compact .gauge::before { inset:9px; } .shell.is-compact .status-stack { grid-column:1/-1; display:grid; grid-template-columns:1fr 1fr; } .shell.is-compact .metric { grid-column:span 3; } .shell.is-compact .gauge-status { font-size:20px; }
+@container (min-width:760px) {
+  .shell.is-full { padding:20px; gap:16px; }
+  .is-full .hero { grid-template-columns:120px 180px minmax(0,1fr); gap:20px; }
+  .shell.is-full.no-modem .hero { grid-template-columns:180px minmax(0,1fr); }
+  .is-full .hardware { height:150px; }
+  .is-full .gauge { width:min(100%,166px); }
+  .is-full .status-stack { display:grid; width:100%; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .is-full .status-item { flex-direction:column; align-items:flex-start; padding:10px 13px; }
+  .is-full .status-value { font-size:16px; max-width:100%; }
+  .is-full .metrics { grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); }
+  .is-full .metrics > .metric { grid-column:auto; }
+  .is-full .chart { padding:14px 16px 12px; }
+  .is-full .chart-title { font-size:14px; }
+  .is-full .chart-axis { font-size:11px; }
+  .is-full .chart-plot { height:clamp(138px,15cqi,190px); }
+  .is-full .chart-empty { height:clamp(150px,20cqi,240px); }
+}
 `;
 const EDITOR_CSS = `
 :host { display:block; color:var(--primary-text-color); } .form { display:grid; gap:13px; padding:9px 0; } h3 { margin:0; font-size:18px; } label { display:grid; gap:5px; font-size:13px; } input,select { box-sizing:border-box; font:inherit; color:var(--primary-text-color); background:var(--card-background-color); border:1px solid var(--divider-color,#a2a2a2); border-radius:8px; min-height:38px; padding:7px; width:100%; } select option { background:var(--card-background-color); } .check { display:flex; gap:9px; align-items:center; } .check input { width:18px; min-height:unset; height:18px; } .options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; } details { padding:9px; border:1px solid var(--divider-color); border-radius:8px; } summary { cursor:pointer; } .tip { opacity:.65; font-size:12px; } .pairs { display:grid; gap:7px; margin-top:12px; }`;
@@ -438,48 +488,127 @@ function selectEntities(config, hass, registry) {
   }
   return mappings;
 }
-function graphMarkup(samples, locale) {
-  if (!Array.isArray(samples) || samples.length < 2)
+function historyLanguage(locale) {
+  return locale === NL ? "nl-NL" : "en-GB";
+}
+
+function graphMarkup(samples, locale, full, animateLatest) {
+  if (samples.length < 2)
     return `<div class="chart-empty">${escapeHTML(locale.history_unavailable)}</div>`;
-  const valid = samples.filter(
-    (p) => Number.isFinite(p.value) && Number.isFinite(p.time),
-  );
-  if (valid.length < 2)
-    return `<div class="chart-empty">${escapeHTML(locale.history_unavailable)}</div>`;
-  const mn = Math.min(...valid.map((p) => p.value)),
-    mx = Math.max(...valid.map((p) => p.value));
-  const margin = Math.max(0.6, (mx - mn) * 0.15),
-    low = mn - margin,
-    high = mx + margin;
-  const left = 20,
-    right = 680,
-    top = 7,
-    bottom = 90,
-    t0 = valid[0].time,
-    t1 = valid[valid.length - 1].time;
-  const point = (p) => [
-    left + ((p.time - t0) / (t1 - t0 || 1)) * (right - left),
-    bottom - ((p.value - low) / (high - low)) * (bottom - top),
-  ];
-  const pts = valid.map(point);
-  const path = pts
-    .map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`)
+  const first = samples[0];
+  const latest = samples[samples.length - 1];
+  const duration = latest.time - first.time || 1;
+  const limit = full ? 84 : 36;
+  const buckets = new Map();
+  let min = Infinity;
+  let max = -Infinity;
+  for (const { time, value } of samples) {
+    min = Math.min(min, value);
+    max = Math.max(max, value);
+    const index = Math.min(limit - 1, Math.floor((time - first.time) / duration * limit));
+    const bucket = buckets.get(index) || {
+      count: 0, offset: 0, sum: 0, min: value, max: value,
+    };
+    bucket.count++;
+    bucket.offset += time - first.time;
+    bucket.sum += value;
+    bucket.min = Math.min(bucket.min, value);
+    bucket.max = Math.max(bucket.max, value);
+    buckets.set(index, bucket);
+  }
+  const padding = Math.max(0.5, (max - min) * 0.16);
+  const low = Math.floor((min - padding) * 2) / 2;
+  const high = Math.ceil((max + padding) * 2) / 2;
+  const x = (time) => ((time - first.time) / duration * 700).toFixed(1);
+  const y = (value) => ((high - value) / (high - low) * 100).toFixed(1);
+  const trend = Array.from(buckets.values(), (b) => ({
+    time: first.time + b.offset / b.count,
+    value: b.sum / b.count,
+  }));
+  const path = [first, ...trend, latest]
+    .map((p, i) => `${i ? "L" : "M"}${x(p.time)},${y(p.value)}`)
     .join(" ");
-  const area =
-    path +
-    ` L${pts[pts.length - 1][0].toFixed(1)},${bottom} L${left},${bottom} Z`;
-  const now = new Date(t1).toLocaleTimeString(
-    locale === NL ? "nl-NL" : "en-GB",
-    { hour: "2-digit", minute: "2-digit" },
-  );
-  return `<svg class="chart-svg" viewBox="0 0 700 110" role="img" aria-label="SNR ${escapeHTML(mn.toFixed(1))}–${escapeHTML(mx.toFixed(1))} dB">
-    <defs><linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#23dd6e" stop-opacity=".29"/><stop offset="1" stop-color="#23dd6e" stop-opacity=".01"/></linearGradient></defs>
-    <path class="chart-guide" d="M20 10H680 M20 49H680 M20 90H680"/><text class="chart-label" x="0" y="14">${high.toFixed(0)}</text><text class="chart-label" x="0" y="94">${low.toFixed(0)}</text>
-    <path d="${area}" fill="url(#area-grad)"/><path d="${path}" fill="none" stroke="#42e879" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="${pts[pts.length - 1][0].toFixed(1)}" cy="${pts[pts.length - 1][1].toFixed(1)}" r="3.5" fill="#80ff9d"/>
-    <text class="chart-label" x="20" y="107">${new Date(t0).toLocaleDateString(locale === NL ? "nl-NL" : "en-GB", { day: "2-digit", month: "short" })}</text>
-    <text class="chart-label" x="680" y="107" text-anchor="end">${escapeHTML(now)}</text>
-  </svg>`;
+  const extrema = [];
+  for (const [index, bucket] of Array.from(buckets.values()).entries()) {
+    const { time, value: average } = trend[index];
+    const lowPoint = average - bucket.min >= 0.9 ? bucket.min : average;
+    const highPoint = bucket.max - average >= 0.9 ? bucket.max : average;
+    if (lowPoint !== highPoint) {
+      extrema.push(`M${x(time)},${y(lowPoint)}V${y(highPoint)}`);
+    }
+  }
+  const language = historyLanguage(locale);
+  const number = new Intl.NumberFormat(language, { maximumFractionDigits: 2 });
+  const dateOptions = { day: "2-digit", month: "short" };
+  const timeOptions = { hour: "2-digit", minute: "2-digit" };
+  const start = new Date(first.time);
+  const end = new Date(latest.time);
+  const dateTimeOptions = { ...dateOptions, ...timeOptions };
+  const endOptions = start.toDateString() === end.toDateString() ? timeOptions : dateTimeOptions;
+  return `<div class="chart-grid">
+    <div class="chart-axis chart-y" aria-hidden="true"><span>${number.format(high)}</span><span>${number.format((low + high) / 2)}</span><span>${number.format(low)}</span></div>
+    <div class="chart-plot" tabindex="0" role="group" aria-label="SNR ${number.format(min)}–${number.format(max)} dB">
+      <svg class="chart-svg" viewBox="0 0 700 100" preserveAspectRatio="none" aria-hidden="true">
+        <path class="chart-guide" vector-effect="non-scaling-stroke" d="M0,0H700 M0,50H700 M0,100H700"/>
+        <path d="${path} L${x(latest.time)},100 L0,100 Z" fill="#71dfb0" fill-opacity=".045"/>
+        <path class="chart-range" vector-effect="non-scaling-stroke" d="${extrema.join(" ")}"/>
+        <path class="chart-trace" vector-effect="non-scaling-stroke" d="${path}"/>
+      </svg>
+      <span class="chart-latest${animateLatest ? " is-fresh" : ""}" style="left:${Number(x(latest.time)) / 7}%;top:${y(latest.value)}%" aria-hidden="true"></span>
+      <div class="chart-tooltip" hidden><output></output></div>
+    </div>
+    <div class="chart-axis chart-x" aria-hidden="true"><span>${escapeHTML(start.toLocaleString(language, dateTimeOptions))}</span><span>${escapeHTML(end.toLocaleString(language, endOptions))}</span></div>
+  </div>`;
+}
+
+function bindChart(plot, samples, locale) {
+  const tooltip = plot.querySelector(".chart-tooltip");
+  const output = tooltip.querySelector("output");
+  const start = samples[0].time;
+  const duration = samples[samples.length - 1].time - start || 1;
+  const date = new Intl.DateTimeFormat(historyLanguage(locale), { dateStyle: "short", timeStyle: "short" });
+  const number = new Intl.NumberFormat(historyLanguage(locale), { maximumFractionDigits: 6 });
+  let index = samples.length - 1;
+  const show = (next) => {
+    index = next;
+    const sample = samples[index];
+    const position = (sample.time - start) / duration * 100;
+    tooltip.style.left = `${position}%`;
+    tooltip.classList.toggle("is-right", position > 50);
+    const label = `${number.format(sample.value)} dB · ${date.format(sample.time)}`;
+    if (output.textContent !== label) output.textContent = label;
+    tooltip.hidden = false;
+  };
+  const pick = (event) => {
+    const bounds = plot.getBoundingClientRect();
+    const target = start + (event.clientX - bounds.left) / bounds.width * duration;
+    let left = 0;
+    let right = samples.length - 1;
+    while (left < right) {
+      const middle = Math.floor((left + right) / 2);
+      if (samples[middle].time < target) left = middle + 1;
+      else right = middle;
+    }
+    if (left > 0 && target - samples[left - 1].time < samples[left].time - target) left--;
+    show(left);
+  };
+  plot.addEventListener("pointermove", (event) => {
+    if (event.pointerType === "mouse") pick(event);
+  });
+  plot.addEventListener("click", pick);
+  plot.addEventListener("pointerleave", (event) => {
+    if (event.pointerType === "mouse") tooltip.hidden = true;
+  });
+  plot.addEventListener("blur", () => { tooltip.hidden = true; });
+  plot.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      tooltip.hidden = true;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      const next = tooltip.hidden ? index : index + (event.key === "ArrowLeft" ? -1 : 1);
+      show(Math.max(0, Math.min(samples.length - 1, next)));
+    }
+  });
 }
 
 class ZiggoModemCard extends HTMLElement {
@@ -487,10 +616,10 @@ class ZiggoModemCard extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this._registry = [];
-    this._history = [];
+    this._history = { key: "", samples: [] };
     this._chartHours = 24;
     this._lastHistoryRequest = 0;
-    this._historyId = "";
+    this._historyRequestKey = "";
     this._lastSignature = "";
     this._mounted = false;
     this._registryLoaded = false;
@@ -503,6 +632,7 @@ class ZiggoModemCard extends HTMLElement {
       show_modem: true,
       show_chart: true,
       glow: true,
+      animations: false,
       metrics: [...DEFAULT_METRICS],
     };
   }
@@ -532,6 +662,9 @@ class ZiggoModemCard extends HTMLElement {
     return this._config?.layout === "compact" ? 8 : 12;
   }
   getGridOptions() {
+    if (this._config?.layout === "full") {
+      return { columns: "full", rows: "auto", min_columns: 4 };
+    }
     return {
       columns: this._config?.layout === "compact" ? 6 : 12,
       rows: this._config?.layout === "compact" ? 9 : 12,
@@ -592,31 +725,46 @@ class ZiggoModemCard extends HTMLElement {
       return;
     const id = this._resolve().ds_snr;
     if (!id) return;
+    const hours = this._chartHours;
+    const key = `${id}:${hours}`;
     if (
-      id === this._historyId &&
+      key === this._historyRequestKey &&
       Date.now() - this._lastHistoryRequest < 300000
     )
       return;
-    this._historyId = id;
+    const previousLatest = key === this._history.key
+      ? this._history.samples.at(-1)?.time
+      : undefined;
+    this._historyRequestKey = key;
     this._lastHistoryRequest = Date.now();
     this._inHistory = true;
     const now = new Date(),
-      start = new Date(now.getTime() - this._chartHours * 3600000);
+      start = new Date(now.getTime() - hours * 3600000);
     const query = `history/period/${encodeURIComponent(start.toISOString())}?filter_entity_id=${encodeURIComponent(id)}&end_time=${encodeURIComponent(now.toISOString())}&minimal_response=1&no_attributes=1`;
+    const isCurrent = () =>
+      this._mounted &&
+      this._config.show_chart &&
+      hours === this._chartHours &&
+      id === this._resolve().ds_snr;
     try {
       const result = await this._hass.callApi("GET", query);
-      if (!this._mounted || id !== this._resolve().ds_snr) return;
+      if (!isCurrent()) return;
       const list = Array.isArray(result?.[0]) ? result[0] : [];
-      this._history = list
+      const samples = list
         .map((s) => ({
-          time: new Date(s.last_changed || s.last_updated).getTime(),
-          value: numberOrNull(s.state),
+          time: new Date(s?.last_changed || s?.last_updated).getTime(),
+          value: numberOrNull(s?.state),
         }))
-        .filter((s) => s.value !== null && Number.isFinite(s.time));
+        .filter((s) => s.value !== null && Number.isFinite(s.time))
+        .sort((a, b) => a.time - b.time);
+      this._history = { key, samples };
+      this._freshHistory =
+        previousLatest !== undefined && samples.at(-1)?.time > previousLatest;
     } catch {
-      this._history = [];
+      // Keep the last successful series when Recorder is temporarily unavailable.
     } finally {
       this._inHistory = false;
+      if (!isCurrent()) this._historyRequestKey = "";
       this._lastSignature = "";
       this._render();
     }
@@ -639,6 +787,9 @@ class ZiggoModemCard extends HTMLElement {
     if (!this._hass || !this._config || !this.isConnected) return;
     const m = this._resolve(),
       locale = localeFor(this._config, this._hass);
+    const history = this._history.key === `${m.ds_snr}:${this._chartHours}`
+      ? this._history.samples
+      : [];
     const statusState = this._hass.states[m.status];
     const reportedDocsis = statusState?.attributes?.docsis_version;
     const docsisVersion =
@@ -668,7 +819,7 @@ class ZiggoModemCard extends HTMLElement {
       qualityReason,
       docsisVersion,
       this._chartHours,
-      this._history.length,
+      history.length,
       this._lastHistoryRequest,
     ]);
     if (signature === this._lastSignature) return;
@@ -694,6 +845,17 @@ class ZiggoModemCard extends HTMLElement {
     const content = this.shadowRoot.getElementById("content");
     const scoreClamped =
       score === null ? null : Math.min(100, Math.max(0, score));
+    const visibleScore = scoreClamped === null ? 0 : scoreClamped * 0.75;
+    const previousScore = this._gaugeEntity === m.signal_quality
+      ? this._gaugeScore
+      : undefined;
+    this._gaugeScore = visibleScore;
+    this._gaugeEntity = m.signal_quality;
+    const animate =
+      this._config.animations === true &&
+      !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const freshHistory = this._freshHistory;
+    this._freshHistory = false;
     const tone = scoreStatus(scoreClamped),
       ring =
         tone === "bad" ? "#ff656e" : tone === "warn" ? "#ffb044" : "#59e77c";
@@ -715,6 +877,13 @@ class ZiggoModemCard extends HTMLElement {
         ? "bad"
         : statusClass(statusValue);
     const timestamp = this._state("last_successful_update");
+    const snrState = this._hass.states[m.ds_snr];
+    const snr = isAvailable(snrState) ? numberOrNull(snrState.state) : null;
+    const snrDisplay = snr === null
+      ? "—"
+      : new Intl.NumberFormat(historyLanguage(locale), {
+          maximumFractionDigits: 2,
+        }).format(snr);
     const metrics = (this._config.metrics || []).filter((key) => m[key]);
     const diagnostics = OPTIONAL_METRICS.filter((key) => m[key]);
     const hasDiagnostics = showQualityDetails || diagnostics.length > 0;
@@ -735,28 +904,50 @@ class ZiggoModemCard extends HTMLElement {
       if (dialog.open && !hasDiagnostics) dialog.close();
     }
     const hasData = Boolean(m.status || m.signal_quality || m.ds_snr);
-    content.innerHTML = `<ha-card><div class="shell ${this._config.show_modem ? "" : "no-modem "}${this._config.layout === "compact" ? "is-compact " : ""}${this._config.glow ? "is-glowing" : "no-effects"}">
+    const full = this._config.layout === "full";
+    const layoutClass = full
+      ? "is-full"
+      : this._config.layout === "compact"
+        ? "is-compact"
+        : "";
+    const focusedChartControl = this.shadowRoot.activeElement?.matches(".chart-plot, .chart-select")
+      ? this.shadowRoot.activeElement.className
+      : "";
+    content.innerHTML = `<ha-card><div class="shell ${this._config.show_modem ? "" : "no-modem "}${layoutClass} ${this._config.glow ? "" : "no-effects "}${this._config.animations === true ? "has-motion" : ""}">
       <div class="glow"></div>
       <header class="head"><div class="identity"><span class="brand" aria-hidden="true">Z</span><div class="heading"><div class="title">${escapeHTML(this._config.title || locale.title)}</div><div class="subtitle">Sagemcom · DOCSIS${docsisVersion ? ` ${escapeHTML(docsisVersion)}` : ""} · ha-ziggo-modem</div></div></div></header>
       ${
         hasData
           ? `<section class="hero">
         ${this._config.show_modem ? `<div class="hardware"><img src="${escapeHTML(CARD_IMAGE_URL)}" alt="Ziggo modem" loading="lazy"></div>` : ""}
-        <div class="gauge-wrap"><div class="gauge" style="--pct:${scoreClamped === null ? 0 : (scoreClamped * 0.75).toFixed(1)}%;--ring:${ring};"><div class="gauge-inner"><span class="gauge-overline">${escapeHTML(locale.signal_quality)}</span><span class="gauge-status ${tone}">${escapeHTML(qualValue)}</span><span class="gauge-score">${scoreClamped === null ? "—" : scoreClamped + " / 100"}</span></div></div></div>
+        <div class="gauge-wrap"><div class="gauge" style="--ring:${ring};">
+          <svg class="gauge-ring" viewBox="0 0 100 100" aria-hidden="true">
+            <circle class="gauge-track" cx="50" cy="50" r="46" pathLength="100" stroke-dasharray="75 25"/>
+            <circle class="gauge-progress" cx="50" cy="50" r="46" pathLength="100" stroke-dasharray="${visibleScore} 100"/>
+          </svg>
+          <div class="gauge-inner"><span class="gauge-overline">${escapeHTML(locale.signal_quality)}</span><span class="gauge-status ${tone}">${escapeHTML(qualValue)}</span><span class="gauge-score">${scoreClamped === null ? "—" : scoreClamped + " / 100"}</span></div></div></div>
         <div class="status-stack">
           ${this._statusItem("status", statusValue, statusClass(statusValue), locale)}
           ${this._statusItem("uptime", displayValue(this._state("uptime")), "", locale)}
           ${this._statusItem("internet_access", friendlyState(internet, "internet_access", locale), binaryClass(internet, "internet_access"), locale)}
           ${this._statusItem("cable_issue", friendlyState(cable, "cable_issue", locale), binaryClass(cable, "cable_issue"), locale)}
-          ${this._statusItem("last_successful_update", timeDisplay(timestamp, locale), "", locale)}
         </div>
       </section>
       ${metrics.length ? `<section class="metrics" aria-label="DOCSIS">${metrics.map((key) => this._metric(key, locale)).join("")}</section>` : ""}
-      ${this._config.show_chart ? `<section class="chart"><div class="chart-head"><span class="chart-title">↗ ${escapeHTML(locale.history)}</span><select class="chart-select" data-action="period" aria-label="History period"><option value="24" ${this._chartHours === 24 ? "selected" : ""}>${escapeHTML(locale.day)}</option><option value="168" ${this._chartHours === 168 ? "selected" : ""}>${escapeHTML(locale.week)}</option></select></div>${graphMarkup(this._history, locale)}</section>` : ""}`
+      ${this._config.show_chart ? `<section class="chart"><div class="chart-head"><div><span class="chart-title">${escapeHTML(locale.history)}</span><strong class="chart-current">${snrDisplay}${snr === null ? "" : " <small>dB</small>"}</strong></div><select class="chart-select" data-action="period" aria-label="${escapeHTML(locale.history_period)}"><option value="24" ${this._chartHours === 24 ? "selected" : ""}>${escapeHTML(locale.day)}</option><option value="168" ${this._chartHours === 168 ? "selected" : ""}>${escapeHTML(locale.week)}</option></select></div>${graphMarkup(history, locale, full, animate && freshHistory)}</section>` : ""}`
           : `<p class="alert">${escapeHTML(locale.no_data)}</p>`
       }
       <footer class="footer"><span class="footer-left"><span class="dot ${healthTone}" aria-hidden="true"></span>${escapeHTML(locale.updated)} · ${escapeHTML(timeDisplay(timestamp, locale))}</span>${hasDiagnostics ? `<button class="small-button" type="button" data-action="diagnostics" aria-haspopup="dialog">${escapeHTML(locale.diagnostics)}</button>` : ""}</footer>
     </div></ha-card>`;
+    if (animate && previousScore !== undefined && previousScore !== visibleScore) {
+      content.querySelector(".gauge-progress")?.animate(
+        { strokeDasharray: [`${previousScore} 100`, `${visibleScore} 100`] },
+        { duration: 850, easing: "cubic-bezier(.2,.65,.3,1)" },
+      );
+    }
+    const plot = content.querySelector(".chart-plot");
+    if (plot) bindChart(plot, history, locale);
+    if (focusedChartControl) content.querySelector(`.${focusedChartControl}`)?.focus({ preventScroll: true });
     content
       .querySelector('[data-action="diagnostics"]')
       ?.addEventListener("click", () => dialog.showModal());
@@ -764,8 +955,6 @@ class ZiggoModemCard extends HTMLElement {
       .querySelector('[data-action="period"]')
       ?.addEventListener("change", (e) => {
         this._chartHours = Number(e.target.value);
-        this._lastHistoryRequest = 0;
-        this._history = [];
         this._lastSignature = "";
         this._render();
         this._loadHistory();
@@ -830,16 +1019,17 @@ class ZiggoModemCardEditor extends HTMLElement {
             `<option value="${escapeHTML(id)}" ${this._config.device_id === id ? "selected" : ""}>${escapeHTML(name)}</option>`,
         )
         .join("")}</select></label>
-      <label>${escapeHTML(locale.layout)}<select data-key="layout">${["auto", "compact", "expanded"].map((k) => `<option value="${k}" ${this._config.layout === k ? "selected" : ""}>${escapeHTML(locale[k])}</option>`).join("")}</select></label>
+      <label>${escapeHTML(locale.layout)}<select data-key="layout">${["auto", "compact", "expanded", "full"].map((k) => `<option value="${k}" ${this._config.layout === k ? "selected" : ""}>${escapeHTML(locale[k])}</option>`).join("")}</select></label>
       <label>${escapeHTML(locale.language)}<select data-key="language"><option value="auto">${escapeHTML(locale.detect)}</option><option value="nl" ${this._config.language === "nl" ? "selected" : ""}>Nederlands</option><option value="en" ${this._config.language === "en" ? "selected" : ""}>English</option></select></label>
       ${[
         ["show_modem", "modem"],
         ["show_chart", "chart"],
         ["glow", "glow"],
+        ["animations", "animations"],
       ]
         .map(
           ([k, label]) =>
-            `<label class="check"><input type="checkbox" data-key="${k}" ${this._config[k] !== false ? "checked" : ""}>${escapeHTML(locale[label])}</label>`,
+            `<label class="check"><input type="checkbox" data-key="${k}" ${this._config[k] ? "checked" : ""}>${escapeHTML(locale[label])}</label>`,
         )
         .join("")}
       <strong>${escapeHTML(locale.metrics)}</strong><div class="options">${[...DEFAULT_METRICS, ...OPTIONAL_METRICS].map((key) => `<label class="check"><input type="checkbox" data-metric="${key}" ${fields.includes(key) ? "checked" : ""}>${escapeHTML(locale[key] || key)}</label>`).join("")}</div>
