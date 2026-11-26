@@ -616,10 +616,10 @@ class ZiggoModemCard extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this._registry = [];
-    this._history = [];
+    this._history = { key: "", samples: [] };
     this._chartHours = 24;
     this._lastHistoryRequest = 0;
-    this._historyId = "";
+    this._historyRequestKey = "";
     this._lastSignature = "";
     this._mounted = false;
     this._registryLoaded = false;
@@ -725,16 +725,17 @@ class ZiggoModemCard extends HTMLElement {
       return;
     const id = this._resolve().ds_snr;
     if (!id) return;
+    const hours = this._chartHours;
+    const key = `${id}:${hours}`;
     if (
-      id === this._historyId &&
+      key === this._historyRequestKey &&
       Date.now() - this._lastHistoryRequest < 300000
     )
       return;
-    const previousLatest = id === this._historyId
-      ? this._history.at(-1)?.time
+    const previousLatest = key === this._history.key
+      ? this._history.samples.at(-1)?.time
       : undefined;
-    const hours = this._chartHours;
-    this._historyId = id;
+    this._historyRequestKey = key;
     this._lastHistoryRequest = Date.now();
     this._inHistory = true;
     const now = new Date(),
@@ -749,19 +750,21 @@ class ZiggoModemCard extends HTMLElement {
       const result = await this._hass.callApi("GET", query);
       if (!isCurrent()) return;
       const list = Array.isArray(result?.[0]) ? result[0] : [];
-      this._history = list
+      const samples = list
         .map((s) => ({
-          time: new Date(s.last_changed || s.last_updated).getTime(),
-          value: numberOrNull(s.state),
+          time: new Date(s?.last_changed || s?.last_updated).getTime(),
+          value: numberOrNull(s?.state),
         }))
         .filter((s) => s.value !== null && Number.isFinite(s.time))
         .sort((a, b) => a.time - b.time);
+      this._history = { key, samples };
       this._freshHistory =
-        previousLatest !== undefined && this._history.at(-1)?.time > previousLatest;
+        previousLatest !== undefined && samples.at(-1)?.time > previousLatest;
     } catch {
-      if (isCurrent()) this._history = [];
+      // Keep the last successful series when Recorder is temporarily unavailable.
     } finally {
       this._inHistory = false;
+      if (!isCurrent()) this._historyRequestKey = "";
       this._lastSignature = "";
       this._render();
     }
@@ -784,6 +787,9 @@ class ZiggoModemCard extends HTMLElement {
     if (!this._hass || !this._config || !this.isConnected) return;
     const m = this._resolve(),
       locale = localeFor(this._config, this._hass);
+    const history = this._history.key === `${m.ds_snr}:${this._chartHours}`
+      ? this._history.samples
+      : [];
     const statusState = this._hass.states[m.status];
     const reportedDocsis = statusState?.attributes?.docsis_version;
     const docsisVersion =
@@ -813,7 +819,7 @@ class ZiggoModemCard extends HTMLElement {
       qualityReason,
       docsisVersion,
       this._chartHours,
-      this._history.length,
+      history.length,
       this._lastHistoryRequest,
     ]);
     if (signature === this._lastSignature) return;
@@ -928,7 +934,7 @@ class ZiggoModemCard extends HTMLElement {
         </div>
       </section>
       ${metrics.length ? `<section class="metrics" aria-label="DOCSIS">${metrics.map((key) => this._metric(key, locale)).join("")}</section>` : ""}
-      ${this._config.show_chart ? `<section class="chart"><div class="chart-head"><div><span class="chart-title">${escapeHTML(locale.history)}</span><strong class="chart-current">${snrDisplay}${snr === null ? "" : " <small>dB</small>"}</strong></div><select class="chart-select" data-action="period" aria-label="${escapeHTML(locale.history_period)}"><option value="24" ${this._chartHours === 24 ? "selected" : ""}>${escapeHTML(locale.day)}</option><option value="168" ${this._chartHours === 168 ? "selected" : ""}>${escapeHTML(locale.week)}</option></select></div>${graphMarkup(this._history, locale, full, animate && freshHistory)}</section>` : ""}`
+      ${this._config.show_chart ? `<section class="chart"><div class="chart-head"><div><span class="chart-title">${escapeHTML(locale.history)}</span><strong class="chart-current">${snrDisplay}${snr === null ? "" : " <small>dB</small>"}</strong></div><select class="chart-select" data-action="period" aria-label="${escapeHTML(locale.history_period)}"><option value="24" ${this._chartHours === 24 ? "selected" : ""}>${escapeHTML(locale.day)}</option><option value="168" ${this._chartHours === 168 ? "selected" : ""}>${escapeHTML(locale.week)}</option></select></div>${graphMarkup(history, locale, full, animate && freshHistory)}</section>` : ""}`
           : `<p class="alert">${escapeHTML(locale.no_data)}</p>`
       }
       <footer class="footer"><span class="footer-left"><span class="dot ${healthTone}" aria-hidden="true"></span>${escapeHTML(locale.updated)} · ${escapeHTML(timeDisplay(timestamp, locale))}</span>${hasDiagnostics ? `<button class="small-button" type="button" data-action="diagnostics" aria-haspopup="dialog">${escapeHTML(locale.diagnostics)}</button>` : ""}</footer>
@@ -940,7 +946,7 @@ class ZiggoModemCard extends HTMLElement {
       );
     }
     const plot = content.querySelector(".chart-plot");
-    if (plot) bindChart(plot, this._history, locale);
+    if (plot) bindChart(plot, history, locale);
     if (focusedChartControl) content.querySelector(`.${focusedChartControl}`)?.focus({ preventScroll: true });
     content
       .querySelector('[data-action="diagnostics"]')
@@ -949,8 +955,6 @@ class ZiggoModemCard extends HTMLElement {
       .querySelector('[data-action="period"]')
       ?.addEventListener("change", (e) => {
         this._chartHours = Number(e.target.value);
-        this._lastHistoryRequest = 0;
-        this._history = [];
         this._lastSignature = "";
         this._render();
         this._loadHistory();

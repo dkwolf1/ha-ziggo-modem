@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { test } = require("node:test");
 const fs = require("node:fs");
 const vm = require("node:vm");
 const path = require("node:path");
@@ -196,6 +197,60 @@ assert.match(fullChart, /class="chart-range" vector-effect="non-scaling-stroke" 
 assert.match(fullChart, /aria-label="SNR 33–37 dB"/);
 assert.match(fullChart, /chart-latest is-fresh/);
 assert.doesNotMatch(compactChart, /chart-latest is-fresh/);
+
+test("the chart shows only history for the selected sensor and period", async () => {
+  const historyCard = new registered["ziggo-modem-card"]();
+  const states = {
+    "sensor.first_snr": { state: "35" },
+    "sensor.second_snr": { state: "40" },
+  };
+  const response = (values) => [
+    values.map((state, i) => ({
+      state,
+      last_changed: new Date(i * 60000).toISOString(),
+    })),
+  ];
+  const select = (id) => historyCard.setConfig({
+    type: "custom:ziggo-modem-card",
+    entities: { ds_snr: id },
+  });
+  const html = () => historyCard._content.innerHTML;
+  select("sensor.first_snr");
+  historyCard.hass = { states, locale: { language: "en" } };
+  historyCard._mounted = true;
+  historyCard._hass.callApi = async () => response(["33", "35"]);
+  await historyCard._loadHistory();
+  assert.match(html(), /SNR 33–35 dB/);
+
+  let finishFirst;
+  let finishSecond;
+  const pendingFirst = new Promise((resolve) => { finishFirst = resolve; });
+  const pendingSecond = new Promise((resolve) => { finishSecond = resolve; });
+  historyCard._hass.callApi = (_method, query) =>
+    query.includes("sensor.first_snr") ? pendingFirst : pendingSecond;
+  historyCard._lastHistoryRequest = 0;
+  const firstRefresh = historyCard._loadHistory();
+  select("sensor.second_snr");
+  assert.doesNotMatch(html(), /SNR 33–35 dB/);
+  finishFirst(response(["31", "32"]));
+  await firstRefresh;
+  assert.doesNotMatch(html(), /SNR 31–32 dB/);
+  finishSecond(response(["39", "40"]));
+  await new Promise(setImmediate);
+  assert.match(html(), /SNR 39–40 dB/);
+
+  historyCard._hass.callApi = async () => response(["36", "40"]);
+  historyCard._chartHours = 168;
+  historyCard._render();
+  assert.doesNotMatch(html(), /SNR 39–40 dB/);
+  await new Promise(setImmediate);
+  assert.match(html(), /SNR 36–40 dB/);
+
+  historyCard._lastHistoryRequest = 0;
+  historyCard._hass.callApi = async () => { throw new Error("Recorder unavailable"); };
+  await historyCard._loadHistory();
+  assert.match(html(), /SNR 36–40 dB/);
+});
 console.log(
   "OK: Ziggo card mock rendering, registry mapping, HTML escaping, history SVG, Sections sizing",
 );

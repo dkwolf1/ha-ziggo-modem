@@ -45,9 +45,10 @@ To add the card using YAML:
 type: custom:ziggo-modem-card
 ```
 
-Choose **Full width** in the card editor, or set `layout: full` in YAML, for a
-wider tile layout and a larger SNR chart. In a Sections dashboard, the card
-fills its section. Increase the section width to span several dashboard columns.
+From **v1.8.0**, choose **Full width** in the card editor or set `layout: full`
+in YAML for a wider tile layout and a larger SNR chart. In a Sections dashboard,
+the card fills its section. Increase the section width to span several dashboard
+columns.
 If the card has a manual size, enable **Use recommended size** in the
 card's **Layout** tab to apply the new sizing.
 
@@ -294,9 +295,10 @@ Voor een handmatige kaart in YAML:
 type: custom:ziggo-modem-card
 ```
 
-Kies **Volledige breedte** onder **Weergave** in de kaarteditor, of voeg
-`layout: full` toe in YAML. De tegels krijgen meer ruimte en de SNR-grafiek wordt
-groter. In een dashboard met secties vult de kaart haar eigen sectie. Maak die
+Vanaf **v1.8.0** kun je **Volledige breedte** kiezen onder **Weergave** in de
+kaarteditor of `layout: full` toevoegen in YAML. De tegels krijgen meer ruimte en
+de SNR-grafiek wordt groter. In een dashboard met secties vult de kaart haar
+eigen sectie. Maak die
 sectie breder als de kaart meerdere dashboardkolommen moet vullen. Heb je de
 kaart eerder handmatig gedimensioneerd? Schakel dan **Aanbevolen grootte
 gebruiken** in op het tabblad **Indeling**.
