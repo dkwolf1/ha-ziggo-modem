@@ -227,8 +227,10 @@ ha-card { box-sizing:border-box; display:block; height:100%; min-height:0; width
 .chart-range { stroke:#80cfb0; stroke-opacity:.42; }
 .chart-trace { stroke:#71dfb0; stroke-width:1.25; stroke-linecap:round; stroke-linejoin:round; }
 .chart-latest { position:absolute; width:6px; height:6px; border-radius:50%; background:#a7f6cf; transform:translate(-50%,-50%); pointer-events:none; }
-.chart-latest.is-fresh::after { content:""; position:absolute; inset:0; border:1px solid #a7f6cf; border-radius:inherit; animation:ziggoSampleIn .75s ease-out both; }
-@keyframes ziggoSampleIn { from { opacity:.9; transform:scale(1); } to { opacity:0; transform:scale(3.6); } }
+.chart-latest.is-fresh { animation:ziggoSamplePop .95s ease-out; }
+.chart-latest.is-fresh::after { content:""; position:absolute; inset:-1px; border:2px solid #a7f6cf; border-radius:inherit; animation:ziggoPulse .95s ease-out both; }
+@keyframes ziggoSamplePop { 35% { box-shadow:0 0 12px 4px #8cebbb; } }
+@keyframes ziggoPulse { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(4.2); } }
 .chart-tooltip { position:absolute; z-index:1; top:0; bottom:0; border-left:1px solid rgba(221,240,233,.45); pointer-events:none; }
 .chart-tooltip output { position:absolute; top:0; left:6px; padding:5px 7px; border-radius:6px; background:#18262c; color:#e8f7f0; border:1px solid #51696b; font-size:11px; white-space:nowrap; }
 .chart-tooltip.is-right output { left:auto; right:6px; }
@@ -236,6 +238,11 @@ ha-card { box-sizing:border-box; display:block; height:100%; min-height:0; width
 .footer { margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:2px; }
 .footer-left { display:flex; align-items:center; gap:8px; min-width:0; font-size:11px; color:#b8bbca; }
 .dot { display:inline-block; height:8px; width:8px; background:#52db73; border-radius:50%; box-shadow:0 0 8px rgba(69,250,106,.4); flex:none; } .dot.bad { background:#ff656e;box-shadow:0 0 8px rgba(255,101,110,.4); } .dot.muted { background:#8b919e;box-shadow:none; } .dot.warn { background:#ffb044;box-shadow:0 0 8px rgba(255,176,68,.4); }
+.has-motion .dot.good { position:relative; }
+.has-motion .dot.good::after { content:""; position:absolute; inset:0; border:1px solid #79f69c; border-radius:inherit; animation:ziggoOnlinePulse 3s ease-out infinite; }
+.shell.has-motion:not(.no-effects)::after { content:""; position:absolute; inset:0 14px auto; height:3px; pointer-events:none; border-radius:6px; background:linear-gradient(90deg,transparent,#ff9d3c 42%,#ffe1a6 50%,#ff9d3c 58%,transparent) 150% 0 / 45% 100% no-repeat; filter:drop-shadow(0 0 5px #f88e31); animation:ziggoEdgeSweep 5s ease-in-out infinite; }
+@keyframes ziggoOnlinePulse { 0% { opacity:.95; transform:scale(1); } 50%,100% { opacity:0; transform:scale(3); } }
+@keyframes ziggoEdgeSweep { 0% { background-position:-85% 0; opacity:0; } 13%,55% { opacity:1; } 70%,100% { background-position:185% 0; opacity:0; } }
 .small-button { font:inherit; color:#f1f0f4; padding:8px 11px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.09); border-radius:11px; cursor:pointer; font-size:12px; white-space:nowrap; }
 .small-button:hover,.small-button:focus-visible { background:rgba(255,136,0,.25); }
 .alert { border:1px solid rgba(249,185,78,.25); color:#ffcb80; background:rgba(255,130,13,.09); border-radius:9px; padding:11px; font-size:12px; }
@@ -251,7 +258,10 @@ ha-card { box-sizing:border-box; display:block; height:100%; min-height:0; width
 .details .metric { grid-column:auto; }
 .shell.no-modem .hero { grid-template-columns:minmax(140px,1fr) minmax(160px,1fr); }
 .shell.no-effects .glow,.shell.no-effects .hardware::before { display:none; }
-@media(prefers-reduced-motion:reduce) { .chart-latest.is-fresh::after { animation:none; opacity:0; } }
+@media(prefers-reduced-motion:reduce) {
+  .chart-latest.is-fresh { animation:none; }
+  .chart-latest.is-fresh::after,.has-motion .dot.good::after,.shell.has-motion:not(.no-effects)::after { display:none; }
+}
 @container (max-width:620px) { .shell.no-modem .hero {grid-template-columns:1fr;} .shell { padding:13px; gap:10px; } .title { font-size:19px; } .hero { grid-template-columns:120px 1fr; } .hardware { height:150px; } .gauge { width:158px; } .status-stack { grid-column:1/-1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); } .metric { grid-column:span 3; } .metric.wide { grid-column:span 3; } .gauge-status { font-size:22px; } .details { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @container (max-width:380px) { .hero { grid-template-columns:1fr 1fr; gap:5px; } .hardware { height:125px; } .gauge { width:min(100%,137px); } .gauge::before { inset:9px; } .status-stack { grid-template-columns:1fr 1fr; } .status-item { padding:8px; } .status-value { font-size:11px; } .status-label { font-size:10px; } .brand { height:35px; width:35px; font-size:22px; } .metric-value { font-size:16px; } .chart-plot { height:88px; } .footer-left { font-size:10px; } }
 .shell.is-compact .hero { grid-template-columns:78px 1fr; } .shell.is-compact .hardware { height:120px; } .shell.is-compact .gauge { width:130px; } .shell.is-compact .gauge::before { inset:9px; } .shell.is-compact .status-stack { grid-column:1/-1; display:grid; grid-template-columns:1fr 1fr; } .shell.is-compact .metric { grid-column:span 3; } .shell.is-compact .gauge-status { font-size:20px; }
@@ -897,7 +907,7 @@ class ZiggoModemCard extends HTMLElement {
     const focusedChartControl = this.shadowRoot.activeElement?.matches(".chart-plot, .chart-select")
       ? this.shadowRoot.activeElement.className
       : "";
-    content.innerHTML = `<ha-card><div class="shell ${this._config.show_modem ? "" : "no-modem "}${layoutClass} ${this._config.glow ? "" : "no-effects"}">
+    content.innerHTML = `<ha-card><div class="shell ${this._config.show_modem ? "" : "no-modem "}${layoutClass} ${this._config.glow ? "" : "no-effects "}${this._config.animations === true ? "has-motion" : ""}">
       <div class="glow"></div>
       <header class="head"><div class="identity"><span class="brand" aria-hidden="true">Z</span><div class="heading"><div class="title">${escapeHTML(this._config.title || locale.title)}</div><div class="subtitle">Sagemcom · DOCSIS${docsisVersion ? ` ${escapeHTML(docsisVersion)}` : ""} · ha-ziggo-modem</div></div></div></header>
       ${
@@ -926,7 +936,7 @@ class ZiggoModemCard extends HTMLElement {
     if (animate && previousScore !== undefined && previousScore !== visibleScore) {
       content.querySelector(".gauge-progress")?.animate(
         { strokeDasharray: [`${previousScore} 100`, `${visibleScore} 100`] },
-        { duration: 450, easing: "ease-out" },
+        { duration: 850, easing: "cubic-bezier(.2,.65,.3,1)" },
       );
     }
     const plot = content.querySelector(".chart-plot");

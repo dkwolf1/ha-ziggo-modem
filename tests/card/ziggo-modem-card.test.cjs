@@ -127,6 +127,11 @@ card.setConfig({
 assert.equal(card.getGridOptions().columns, "full");
 assert.equal(card.getGridOptions().rows, "auto");
 assert.match(card._content.innerHTML, /class="shell is-full /);
+assert.doesNotMatch(card._content.innerHTML, /class="shell[^"]*has-motion/);
+for (const layout of ["auto", "full", "expanded", "compact"]) {
+  card.setConfig({ type: "custom:ziggo-modem-card", layout, animations: true });
+  assert.match(card._content.innerHTML, /class="shell[^"]*has-motion/);
+}
 card.setConfig({
   type: "custom:ziggo-modem-card",
   layout: "compact",
