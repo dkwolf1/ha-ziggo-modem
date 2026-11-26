@@ -1,5 +1,5 @@
 name: Feature request / Verbetering voorstellen
-description: Suggest an improvement to the Ziggo Modem integration.
+description: Suggest an improvement to the Ziggo Modem integration or Neon dashboard card.
 labels: [enhancement]
 body:
   - type: markdown
@@ -7,7 +7,7 @@ body:
       value: |
         You can write in English or Dutch. Je kunt je voorstel in het Nederlands of Engels schrijven.
 
-        Check the [existing issues](https://github.com/dkwolf1/ha-ziggo-modem/issues?q=is%3Aissue) for similar ideas. For changes to the Ziggo Modem Neon dashboard card, use the [card's issue tracker](https://github.com/dkwolf1/ziggo-modem-card/issues).
+        Check the [existing issues](https://github.com/dkwolf1/ha-ziggo-modem/issues?q=is%3Aissue) for similar ideas. Say whether your suggestion concerns the integration, the Neon dashboard card, or both.
 
   - type: textarea
     id: use-case

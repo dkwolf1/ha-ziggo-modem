@@ -6,7 +6,7 @@
 
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=for-the-badge)](https://github.com/pre-commit/pre-commit)
 [![Ruff](https://img.shields.io/badge/code%20style-ruff-000000?style=for-the-badge)](https://github.com/astral-sh/ruff)
-[![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge)](https://hacs.xyz)
+[![Home Assistant Marketplace](https://img.shields.io/badge/Home%20Assistant-Marketplace-038FC7?style=for-the-badge)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkwolf1&repository=ha-ziggo-modem&category=integration)
 
 [![Maintained](https://img.shields.io/badge/maintained-yes-brightgreen?style=for-the-badge)]()
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.7%2B-blue?style=for-the-badge)](https://www.home-assistant.io/)
@@ -17,7 +17,7 @@
 
 Local Home Assistant integration for Ziggo cable modems (Sagemcom).
 
-[Wiki: readings, alerts and troubleshooting](wiki/English.md)
+[Wiki: readings, alerts and troubleshooting](https://github.com/dkwolf1/ha-ziggo-modem/wiki/English)
 
 This integration gives insight into your DOCSIS connection, including signal
 quality, stability, error counters and network status. It works locally and
@@ -61,7 +61,11 @@ indicator. With glow effects enabled, a warm accent also travels along the top
 edge. Animations are off by default and follow the browser's reduced-motion
 preference.
 
-![Ziggo Modem Neon expanded and compact dashboard cards with example values](docs/ziggo-modem-neon.png)
+![Ziggo Modem Neon in full-width mode with example modem readings and an SNR chart](docs/ziggo-modem-neon-full-width.png)
+
+[See the expanded and compact layouts](docs/ziggo-modem-neon.png)
+
+[Neon card setup and troubleshooting](https://github.com/dkwolf1/ha-ziggo-modem/wiki/English#neon-dashboard-card)
 
 ### Features
 
@@ -88,10 +92,9 @@ Requires Home Assistant Core 2026.7.0 or newer.
 
 #### Marketplace (Home Assistant 2026.11 and newer)
 
-1. Go to **Settings > Marketplace**, or open [Ziggo Modem directly](https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkwolf1&repository=ha-ziggo-modem&category=integration).
-2. If the Marketplace does not know this repository yet, add it as a custom
-   repository when prompted.
-3. Install **Ziggo Modem** and restart Home Assistant if requested.
+1. Go to **Settings > Marketplace** and search for **Ziggo Modem**, or
+   [open its Marketplace listing](https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkwolf1&repository=ha-ziggo-modem&category=integration).
+2. Install **Ziggo Modem** and restart Home Assistant if requested.
 
 Existing HACS installations are transferred to the Marketplace automatically
 when upgrading Home Assistant; do not reinstall the integration.
@@ -269,7 +272,7 @@ restart is estimated from the uptime reported by the modem.
 
 Lokale Home Assistant integratie voor Ziggo kabelmodems (Sagemcom).
 
-[Wiki: metingen, meldingen en probleemoplossing](wiki/Nederlands.md)
+[Wiki: metingen, meldingen en probleemoplossing](https://github.com/dkwolf1/ha-ziggo-modem/wiki/Nederlands)
 
 Deze integratie geeft inzicht in je DOCSIS-verbinding, zoals signaalkwaliteit,
 stabiliteit, fouttellers en netwerkstatus. De integratie werkt lokaal en gebruikt
@@ -312,6 +315,11 @@ nieuwe meting in de grafiek en een pulserend online-lampje. Als lichteffecten
 aanstaan, beweegt ook een warme gloed langs de bovenrand. Animaties staan
 standaard uit en volgen de browservoorkeur voor minder beweging.
 
+[Neon-kaart instellen en problemen oplossen](https://github.com/dkwolf1/ha-ziggo-modem/wiki/Nederlands#neon-dashboardkaart)
+
+[Bekijk de brede kaart met voorbeeldmetingen](docs/ziggo-modem-neon-full-width.png) ·
+[Bekijk de uitgebreide en compacte kaart](docs/ziggo-modem-neon.png)
+
 ### Functies
 
 - Modemstatus en uptime
@@ -337,10 +345,9 @@ Vereist Home Assistant Core 2026.7.0 of nieuwer.
 
 #### Marketplace (Home Assistant 2026.11 en nieuwer)
 
-1. Ga naar **Instellingen > Marketplace**, of open [Ziggo Modem direct](https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkwolf1&repository=ha-ziggo-modem&category=integration).
-2. Kent de Marketplace deze repository nog niet, voeg deze dan toe als
-   aangepaste repository zodra daarom wordt gevraagd.
-3. Installeer **Ziggo Modem** en herstart Home Assistant als daarom wordt gevraagd.
+1. Ga naar **Instellingen > Marketplace** en zoek op **Ziggo Modem**, of
+   [open de Marketplace-vermelding](https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkwolf1&repository=ha-ziggo-modem&category=integration).
+2. Installeer **Ziggo Modem** en herstart Home Assistant als daarom wordt gevraagd.
 
 Bestaande HACS-installaties worden bij het bijwerken van Home Assistant
 automatisch overgenomen door de Marketplace. Installeer de integratie niet opnieuw.

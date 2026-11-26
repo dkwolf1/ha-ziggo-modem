@@ -2,6 +2,45 @@
 
 [Wiki-startpagina](https://github.com/dkwolf1/ha-ziggo-modem/wiki/Home) | [English](https://github.com/dkwolf1/ha-ziggo-modem/wiki/English)
 
+## Neon-dashboardkaart
+
+Vanaf **v1.7.0** levert Ziggo Modem de Neon-kaart mee. Herstart Home Assistant na
+installatie of een update, vernieuw je dashboard en voeg **Ziggo Modem · Neon**
+toe via **Kaart toevoegen**. Bestaande dashboards kunnen
+`type: custom:ziggo-modem-card` en hun kaartinstellingen behouden.
+
+### Weergave en grafiek
+
+Kies vanaf **v1.8.0** **Volledige breedte** in de kaarteditor of gebruik
+`layout: full` in YAML. Maak de sectie zelf breder als de kaart meerdere
+dashboardkolommen moet vullen. Heb je de kaart handmatig gedimensioneerd?
+Zet dan **Aanbevolen grootte gebruiken** aan op het tabblad **Indeling**.
+Automatisch, Compact en Uitgebreid zijn ook beschikbaar.
+
+De grafiek toont de actuele downstream-SNR en 24 uur of 7 dagen aan metingen
+uit Recorder. Wijs de grafiek aan, tik erop of gebruik de pijltjestoetsen als
+de grafiek focus heeft. Zo zie je de waarde en het tijdstip van een meting.
+Zie je wel de actuele waarde maar geen grafiek? Controleer dan of Recorder
+de gekozen downstream-SNR-sensor bijhoudt en minstens twee metingen heeft.
+
+**Animaties tonen** staat standaard uit. Zet het aan voor de bewegende
+signaalring, de puls bij nieuwe grafiekmetingen en het online-lampje. Zet ook
+**Lichteffecten gebruiken** aan voor de bewegende gloed langs de bovenrand.
+De animaties volgen de browservoorkeur voor minder beweging.
+
+### Configuratiefout
+
+1. Open de kaarteditor en lees de volledige foutmelding in de voorvertoning.
+2. Staat er `Custom element doesn't exist: ziggo-modem-card`? Controleer
+   of de Ziggo Modem-integratie geladen is. Herstart Home Assistant na een
+   update en vernieuw je browser in Windows met **Ctrl+F5**.
+3. Had je de losse kaart geïnstalleerd? Verwijder dat pakket en de eventuele
+   oude bron onder **Instellingen → Dashboards → Bronnen** of bij je YAML-bronnen.
+   Behoud de Ziggo Modem-integratie en je bestaande dashboardkaart.
+4. Komt de fout terug? Vermeld de volledige fouttekst, de versies van Ziggo Modem
+   en Home Assistant, en of het bij openen of bewerken van het dashboard gebeurt.
+   [Meld het probleem](https://github.com/dkwolf1/ha-ziggo-modem/issues/new/choose)
+
 ## Wat de integratie weet
 
 Home Assistant logt via HTTPS in op de **lokale modem-API** en leest zes

@@ -3,9 +3,6 @@ contact_links:
   - name: Troubleshooting / Problemen oplossen
     url: https://github.com/dkwolf1/ha-ziggo-modem/wiki
     about: Read the English or Dutch guides for modem readings, alerts and troubleshooting.
-  - name: Ziggo Modem Neon dashboard card
-    url: https://github.com/dkwolf1/ziggo-modem-card/issues
-    about: Report problems or suggest improvements for the dashboard card in its own repository.
   - name: Private security report / Beveiligingslek melden
     url: https://github.com/dkwolf1/ha-ziggo-modem/security/advisories/new
     about: Report a security vulnerability privately to the maintainer.
