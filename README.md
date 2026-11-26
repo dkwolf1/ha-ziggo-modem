@@ -45,6 +45,12 @@ To add the card using YAML:
 type: custom:ziggo-modem-card
 ```
 
+Choose **Full width** in the card editor, or set `layout: full` in YAML, for a
+wider tile layout and a larger SNR chart. In a Sections dashboard, the card
+fills its section. Increase the section width to span several dashboard columns.
+If the card has a manual size, enable **Use recommended size** in the
+card's **Layout** tab to apply the new sizing.
+
 The header shows the modem-reported DOCSIS version when available. The optional
 24-hour and 7-day downstream SNR graph uses the Home Assistant Recorder history.
 
@@ -281,6 +287,13 @@ Voor een handmatige kaart in YAML:
 ```yaml
 type: custom:ziggo-modem-card
 ```
+
+Kies **Volledige breedte** onder **Weergave** in de kaarteditor, of voeg
+`layout: full` toe in YAML. De tegels krijgen meer ruimte en de SNR-grafiek wordt
+groter. In een dashboard met secties vult de kaart haar eigen sectie. Maak die
+sectie breder als de kaart meerdere dashboardkolommen moet vullen. Heb je de
+kaart eerder handmatig gedimensioneerd? Schakel dan **Aanbevolen grootte
+gebruiken** in op het tabblad **Indeling**.
 
 Bovenaan staat de DOCSIS-versie als het modem die doorgeeft. De optionele grafiek
 toont 24 uur of 7 dagen aan downstream-SNR-metingen uit Home Assistant Recorder.

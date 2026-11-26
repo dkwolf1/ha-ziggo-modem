@@ -97,6 +97,7 @@ const NL = {
   auto: "Automatisch",
   compact: "Compact",
   expanded: "Uitgebreid",
+  full: "Volledige breedte",
   language: "Taal",
   detect: "Automatisch",
   modem: "Modemafbeelding tonen",
@@ -156,6 +157,7 @@ const EN = {
   auto: "Automatic",
   compact: "Compact",
   expanded: "Expanded",
+  full: "Full width",
   language: "Language",
   detect: "Automatic",
   modem: "Show modem illustration",
@@ -232,6 +234,25 @@ ha-card { box-sizing:border-box; display:block; height:100%; min-height:0; width
 @container (max-width:620px) { .shell.no-modem .hero {grid-template-columns:1fr;} .shell { padding:13px; gap:10px; } .title { font-size:19px; } .hero { grid-template-columns:120px 1fr; } .hardware { height:150px; } .gauge { width:158px; } .status-stack { grid-column:1/-1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); } .metric { grid-column:span 3; } .metric.wide { grid-column:span 3; } .gauge-status { font-size:22px; } .details { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @container (max-width:380px) { .hero { grid-template-columns:1fr 1fr; gap:5px; } .hardware { height:125px; } .gauge { width:min(100%,137px); } .gauge::before { inset:9px; } .status-stack { grid-template-columns:1fr 1fr; } .status-item { padding:8px; } .status-value { font-size:11px; } .status-label { font-size:10px; } .brand { height:35px; width:35px; font-size:22px; } .metric-value { font-size:16px; } .chart-svg { height:85px; } .footer-left { font-size:10px; } }
 .shell.is-compact .hero { grid-template-columns:78px 1fr; } .shell.is-compact .hardware { height:120px; } .shell.is-compact .gauge { width:130px; } .shell.is-compact .gauge::before { inset:9px; } .shell.is-compact .status-stack { grid-column:1/-1; display:grid; grid-template-columns:1fr 1fr; } .shell.is-compact .metric { grid-column:span 3; } .shell.is-compact .gauge-status { font-size:20px; }
+@container (max-width:759px) {
+  .is-full .chart-label { font-size:14px; }
+}
+@container (min-width:760px) {
+  .shell.is-full { padding:20px; gap:16px; }
+  .is-full .hero { grid-template-columns:120px 180px minmax(0,1fr); gap:20px; }
+  .shell.is-full.no-modem .hero { grid-template-columns:180px minmax(0,1fr); }
+  .is-full .hardware { height:150px; }
+  .is-full .gauge { width:min(100%,166px); }
+  .is-full .status-stack { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .is-full .status-item { padding:10px 12px; }
+  .is-full .status-item:last-child { grid-column:1/-1; }
+  .is-full .metrics { grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); }
+  .is-full .metrics > .metric { grid-column:auto; }
+  .is-full .chart { padding:14px 16px 12px; }
+  .is-full .chart-title { font-size:14px; }
+  .is-full .chart-svg { height:auto; }
+  .is-full .chart-empty { height:clamp(150px,20cqi,240px); }
+}
 `;
 const EDITOR_CSS = `
 :host { display:block; color:var(--primary-text-color); } .form { display:grid; gap:13px; padding:9px 0; } h3 { margin:0; font-size:18px; } label { display:grid; gap:5px; font-size:13px; } input,select { box-sizing:border-box; font:inherit; color:var(--primary-text-color); background:var(--card-background-color); border:1px solid var(--divider-color,#a2a2a2); border-radius:8px; min-height:38px; padding:7px; width:100%; } select option { background:var(--card-background-color); } .check { display:flex; gap:9px; align-items:center; } .check input { width:18px; min-height:unset; height:18px; } .options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; } details { padding:9px; border:1px solid var(--divider-color); border-radius:8px; } summary { cursor:pointer; } .tip { opacity:.65; font-size:12px; } .pairs { display:grid; gap:7px; margin-top:12px; }`;
@@ -438,7 +459,7 @@ function selectEntities(config, hass, registry) {
   }
   return mappings;
 }
-function graphMarkup(samples, locale) {
+function graphMarkup(samples, locale, full = false) {
   if (!Array.isArray(samples) || samples.length < 2)
     return `<div class="chart-empty">${escapeHTML(locale.history_unavailable)}</div>`;
   const valid = samples.filter(
@@ -451,12 +472,15 @@ function graphMarkup(samples, locale) {
   const margin = Math.max(0.6, (mx - mn) * 0.15),
     low = mn - margin,
     high = mx + margin;
-  const left = 20,
+  const height = full ? 148 : 110;
+  const left = full ? 30 : 20,
     right = 680,
-    top = 7,
-    bottom = 90,
+    top = full ? 12 : 7,
+    bottom = height - 20,
     t0 = valid[0].time,
     t1 = valid[valid.length - 1].time;
+  const topGuide = full ? top : 10;
+  const midGuide = (top + bottom) / 2;
   const point = (p) => [
     left + ((p.time - t0) / (t1 - t0 || 1)) * (right - left),
     bottom - ((p.value - low) / (high - low)) * (bottom - top),
@@ -468,17 +492,26 @@ function graphMarkup(samples, locale) {
   const area =
     path +
     ` L${pts[pts.length - 1][0].toFixed(1)},${bottom} L${left},${bottom} Z`;
-  const now = new Date(t1).toLocaleTimeString(
-    locale === NL ? "nl-NL" : "en-GB",
-    { hour: "2-digit", minute: "2-digit" },
-  );
-  return `<svg class="chart-svg" viewBox="0 0 700 110" role="img" aria-label="SNR ${escapeHTML(mn.toFixed(1))}–${escapeHTML(mx.toFixed(1))} dB">
+  const language = locale === NL ? "nl-NL" : "en-GB";
+  const dateOptions = { day: "2-digit", month: "short" };
+  const timeOptions = { hour: "2-digit", minute: "2-digit" };
+  const start = full
+    ? new Date(t0).toLocaleString(language, { ...dateOptions, ...timeOptions })
+    : new Date(t0).toLocaleDateString(language, dateOptions);
+  const end = full
+    ? new Date(t1).toLocaleString(language, { ...dateOptions, ...timeOptions })
+    : new Date(t1).toLocaleTimeString(language, timeOptions);
+  const precision = full ? 1 : 0;
+  return `<svg class="chart-svg" viewBox="0 0 700 ${height}" role="img" aria-label="SNR ${escapeHTML(mn.toFixed(1))}–${escapeHTML(mx.toFixed(1))} dB">
     <defs><linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#23dd6e" stop-opacity=".29"/><stop offset="1" stop-color="#23dd6e" stop-opacity=".01"/></linearGradient></defs>
-    <path class="chart-guide" d="M20 10H680 M20 49H680 M20 90H680"/><text class="chart-label" x="0" y="14">${high.toFixed(0)}</text><text class="chart-label" x="0" y="94">${low.toFixed(0)}</text>
+    <path class="chart-guide" d="M${left} ${topGuide}H${right} M${left} ${midGuide}H${right} M${left} ${bottom}H${right}"/>
+    <text class="chart-label" x="0" y="${topGuide + 4}">${high.toFixed(precision)}</text>
+    ${full ? `<text class="chart-label" x="0" y="${midGuide + 4}">${((low + high) / 2).toFixed(precision)}</text>` : ""}
+    <text class="chart-label" x="0" y="${bottom + 4}">${low.toFixed(precision)}</text>
     <path d="${area}" fill="url(#area-grad)"/><path d="${path}" fill="none" stroke="#42e879" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
     <circle cx="${pts[pts.length - 1][0].toFixed(1)}" cy="${pts[pts.length - 1][1].toFixed(1)}" r="3.5" fill="#80ff9d"/>
-    <text class="chart-label" x="20" y="107">${new Date(t0).toLocaleDateString(locale === NL ? "nl-NL" : "en-GB", { day: "2-digit", month: "short" })}</text>
-    <text class="chart-label" x="680" y="107" text-anchor="end">${escapeHTML(now)}</text>
+    <text class="chart-label" x="${left}" y="${height - 3}">${escapeHTML(start)}</text>
+    <text class="chart-label" x="${right}" y="${height - 3}" text-anchor="end">${escapeHTML(end)}</text>
   </svg>`;
 }
 
@@ -532,6 +565,9 @@ class ZiggoModemCard extends HTMLElement {
     return this._config?.layout === "compact" ? 8 : 12;
   }
   getGridOptions() {
+    if (this._config?.layout === "full") {
+      return { columns: "full", rows: "auto", min_columns: 4 };
+    }
     return {
       columns: this._config?.layout === "compact" ? 6 : 12,
       rows: this._config?.layout === "compact" ? 9 : 12,
@@ -735,7 +771,13 @@ class ZiggoModemCard extends HTMLElement {
       if (dialog.open && !hasDiagnostics) dialog.close();
     }
     const hasData = Boolean(m.status || m.signal_quality || m.ds_snr);
-    content.innerHTML = `<ha-card><div class="shell ${this._config.show_modem ? "" : "no-modem "}${this._config.layout === "compact" ? "is-compact " : ""}${this._config.glow ? "is-glowing" : "no-effects"}">
+    const full = this._config.layout === "full";
+    const layoutClass = full
+      ? "is-full"
+      : this._config.layout === "compact"
+        ? "is-compact"
+        : "";
+    content.innerHTML = `<ha-card><div class="shell ${this._config.show_modem ? "" : "no-modem "}${layoutClass} ${this._config.glow ? "is-glowing" : "no-effects"}">
       <div class="glow"></div>
       <header class="head"><div class="identity"><span class="brand" aria-hidden="true">Z</span><div class="heading"><div class="title">${escapeHTML(this._config.title || locale.title)}</div><div class="subtitle">Sagemcom · DOCSIS${docsisVersion ? ` ${escapeHTML(docsisVersion)}` : ""} · ha-ziggo-modem</div></div></div></header>
       ${
@@ -752,7 +794,7 @@ class ZiggoModemCard extends HTMLElement {
         </div>
       </section>
       ${metrics.length ? `<section class="metrics" aria-label="DOCSIS">${metrics.map((key) => this._metric(key, locale)).join("")}</section>` : ""}
-      ${this._config.show_chart ? `<section class="chart"><div class="chart-head"><span class="chart-title">↗ ${escapeHTML(locale.history)}</span><select class="chart-select" data-action="period" aria-label="History period"><option value="24" ${this._chartHours === 24 ? "selected" : ""}>${escapeHTML(locale.day)}</option><option value="168" ${this._chartHours === 168 ? "selected" : ""}>${escapeHTML(locale.week)}</option></select></div>${graphMarkup(this._history, locale)}</section>` : ""}`
+      ${this._config.show_chart ? `<section class="chart"><div class="chart-head"><span class="chart-title">↗ ${escapeHTML(locale.history)}</span><select class="chart-select" data-action="period" aria-label="History period"><option value="24" ${this._chartHours === 24 ? "selected" : ""}>${escapeHTML(locale.day)}</option><option value="168" ${this._chartHours === 168 ? "selected" : ""}>${escapeHTML(locale.week)}</option></select></div>${graphMarkup(this._history, locale, full)}</section>` : ""}`
           : `<p class="alert">${escapeHTML(locale.no_data)}</p>`
       }
       <footer class="footer"><span class="footer-left"><span class="dot ${healthTone}" aria-hidden="true"></span>${escapeHTML(locale.updated)} · ${escapeHTML(timeDisplay(timestamp, locale))}</span>${hasDiagnostics ? `<button class="small-button" type="button" data-action="diagnostics" aria-haspopup="dialog">${escapeHTML(locale.diagnostics)}</button>` : ""}</footer>
@@ -830,7 +872,7 @@ class ZiggoModemCardEditor extends HTMLElement {
             `<option value="${escapeHTML(id)}" ${this._config.device_id === id ? "selected" : ""}>${escapeHTML(name)}</option>`,
         )
         .join("")}</select></label>
-      <label>${escapeHTML(locale.layout)}<select data-key="layout">${["auto", "compact", "expanded"].map((k) => `<option value="${k}" ${this._config.layout === k ? "selected" : ""}>${escapeHTML(locale[k])}</option>`).join("")}</select></label>
+      <label>${escapeHTML(locale.layout)}<select data-key="layout">${["auto", "compact", "expanded", "full"].map((k) => `<option value="${k}" ${this._config.layout === k ? "selected" : ""}>${escapeHTML(locale[k])}</option>`).join("")}</select></label>
       <label>${escapeHTML(locale.language)}<select data-key="language"><option value="auto">${escapeHTML(locale.detect)}</option><option value="nl" ${this._config.language === "nl" ? "selected" : ""}>Nederlands</option><option value="en" ${this._config.language === "en" ? "selected" : ""}>English</option></select></label>
       ${[
         ["show_modem", "modem"],

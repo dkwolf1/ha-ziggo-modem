@@ -24,6 +24,7 @@ class MockElement {
     this.shadowRoot = {
       querySelector: (name) =>
         name === "style" && html.includes("<style>") ? {} : null,
+      querySelectorAll: () => [],
       getElementById: () => this._content,
       get innerHTML() {
         return html;
@@ -118,6 +119,30 @@ assert.doesNotMatch(card._content.innerHTML, /Geen geschiedenis beschikbaar/);
 const grid = card.getGridOptions();
 assert.equal(grid.max_columns, 12);
 assert.equal(grid.min_columns, 4);
+card.setConfig({
+  type: "custom:ziggo-modem-card",
+  layout: "full",
+  show_chart: false,
+});
+assert.equal(card.getGridOptions().columns, "full");
+assert.equal(card.getGridOptions().rows, "auto");
+assert.match(card._content.innerHTML, /class="shell is-full /);
+card.setConfig({
+  type: "custom:ziggo-modem-card",
+  layout: "compact",
+  show_chart: false,
+});
+assert.equal(card.getGridOptions().columns, 6);
+assert.equal(card.getGridOptions().rows, 9);
+assert.doesNotMatch(card._content.innerHTML, /class="shell is-full /);
+const editor = new registered["ziggo-modem-card-editor"]();
+editor.setConfig({ layout: "full", language: "nl" });
+assert.match(
+  editor.shadowRoot.innerHTML,
+  /value="full" selected>Volledige breedte/,
+);
+editor.setConfig({ layout: "full", language: "en" });
+assert.match(editor.shadowRoot.innerHTML, /value="full" selected>Full width/);
 assert.equal(
   vm.runInContext("escapeHTML(`<img src=x onerror=alert(1)>`)", context),
   "&lt;img src=x onerror=alert(1)&gt;",
@@ -143,14 +168,16 @@ const selected = vm.runInContext("selectEntities", context)(
 );
 assert.equal(selected.signal_quality, "sensor.ziggo_b_quality");
 assert.equal(selected.ds_snr, "sensor.manual_snr");
-const svg = vm.runInContext("graphMarkup", context)(
-  [
-    { time: 1, value: 35.5 },
-    { time: 2, value: 39.4 },
-  ],
-  vm.runInContext("NL", context),
-);
-assert.match(svg, /<svg/);
+const graphMarkup = vm.runInContext("graphMarkup", context);
+const samples = [
+  { time: 1, value: 35.5 },
+  { time: 2, value: 39.4 },
+];
+const locale = vm.runInContext("NL", context);
+assert.match(graphMarkup(samples, locale), /viewBox="0 0 700 110"/);
+const fullChart = graphMarkup(samples, locale, true);
+assert.match(fullChart, /viewBox="0 0 700 148"/);
+assert.equal((fullChart.match(/<text /g) || []).length, 5);
 console.log(
   "OK: Ziggo card mock rendering, registry mapping, HTML escaping, history SVG, Sections sizing",
 );
