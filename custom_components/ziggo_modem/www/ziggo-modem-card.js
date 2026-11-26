@@ -81,7 +81,7 @@ const NL = {
   unavailable: "Niet beschikbaar",
   diagnostics: "Diagnostiek",
   close: "Sluiten",
-  history: "Downstream SNR (dB)",
+  history: "Downstream SNR",
   quality_context:
     "Je modem kan online zijn terwijl de metingen op de kabellijn een lagere signaalscore opleveren.",
   quality_reason_unavailable:
@@ -103,6 +103,8 @@ const NL = {
   modem: "Modemafbeelding tonen",
   chart: "SNR-grafiek tonen",
   glow: "Lichteffecten gebruiken",
+  animations: "Animaties tonen",
+  history_period: "Grafiekperiode",
   metrics: "Tegels op de kaart",
   entities: "Geavanceerd: entiteiten handmatig koppelen",
   help: "Sla wijzigingen op met de dashboardeditor.",
@@ -141,7 +143,7 @@ const EN = {
   unavailable: "Unavailable",
   diagnostics: "Diagnostics",
   close: "Close",
-  history: "Downstream SNR (dB)",
+  history: "Downstream SNR",
   quality_context:
     "Your modem can be online while readings on the cable line result in a lower signal score.",
   quality_reason_unavailable:
@@ -163,6 +165,8 @@ const EN = {
   modem: "Show modem illustration",
   chart: "Show SNR chart",
   glow: "Enable glow effects",
+  animations: "Show animations",
+  history_period: "Chart period",
   metrics: "Tiles on the card",
   entities: "Advanced: map entity IDs",
   help: "Save changes using the dashboard editor.",
@@ -177,8 +181,6 @@ ha-card { box-sizing:border-box; display:block; height:100%; min-height:0; width
 .shell { box-sizing:border-box; min-height:100%; padding:18px; display:flex; flex-direction:column; gap:13px; position:relative; isolation:isolate; }
 .shell::before { content:""; pointer-events:none; position:absolute; inset:0; z-index:-1; opacity:.85; background:radial-gradient(ellipse at 8% 35%,rgba(255,115,0,.24),transparent 44%),radial-gradient(ellipse at 96% 5%,rgba(255,128,0,.13),transparent 50%); }
 .glow { position:absolute; inset:0; pointer-events:none; z-index:-1; border-radius:25px; box-shadow:inset 0 0 0 1px rgba(255,135,35,.30),inset 0 0 32px rgba(255,123,8,.08); }
-.shell.is-glowing::after { content:""; position:absolute; inset:0; pointer-events:none; border-radius:inherit; box-shadow:inset 0 0 2px 1px rgba(255,154,54,.35); animation:ziggoBreathe 4s ease-in-out infinite; }
-@keyframes ziggoBreathe { 50% {opacity:.45;} }
 .head { display:flex; justify-content:space-between; align-items:center; gap:9px; min-width:0; }
 .identity { display:flex; align-items:center; gap:12px; min-width:0; }
 .brand { flex:none; display:grid; place-items:center; width:42px; height:42px; background:linear-gradient(135deg,#ffae31,#ff6200); border-radius:13px; font-weight:900; color:#16121a; font-size:26px; box-shadow:0 6px 22px rgba(255,115,0,.24); }
@@ -189,8 +191,10 @@ ha-card { box-sizing:border-box; display:block; height:100%; min-height:0; width
 .hardware::before { content:""; position:absolute; bottom:12px; width:140%; height:52%; border-radius:50%; background:#ff6b00; opacity:.24; filter:blur(34px); }
 .hardware img { height:100%; max-width:100%; object-fit:contain; filter:drop-shadow(0 15px 12px rgba(0,0,0,.7)); }
 .gauge-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; min-width:0; }
-.gauge { --pct:0%; --ring:#4cda74; width:min(100%,202px); aspect-ratio:1; position:relative; display:grid; place-items:center; border-radius:50%; background:conic-gradient(from 225deg,var(--ring) 0 var(--pct),rgba(149,162,173,.16) var(--pct) 75%,transparent 75% 100%); box-shadow:0 0 0 2px rgba(255,255,255,.13),0 0 35px rgba(44,241,95,.13); }
+.gauge { --ring:#4cda74; width:min(100%,202px); aspect-ratio:1; position:relative; display:grid; place-items:center; border-radius:50%; box-shadow:0 0 0 1px rgba(255,255,255,.13),0 0 24px rgba(44,241,95,.09); }
 .gauge::before { content:""; position:absolute; inset:13px; border-radius:50%; background:radial-gradient(circle at 35% 15%,#252830,#090d14 69%); box-shadow:inset 0 0 0 1px rgba(255,255,255,.06); }
+.gauge-ring { position:absolute; inset:0; width:100%; height:100%; fill:none; stroke-width:7; transform:rotate(135deg); }
+.gauge-track { stroke:rgba(149,162,173,.2); } .gauge-progress { stroke:var(--ring); }
 .gauge-inner { position:relative; display:flex; align-items:center; justify-content:center; flex-direction:column; text-align:center; }
 .gauge-overline { font-size:11px; color:#c6ccca; } .gauge-status { font-size:clamp(18px,5cqi,30px); font-weight:800; line-height:1.15; margin:5px 0; }
 .gauge-score { color:#d8e6e3; font-size:12px; font-variant-numeric:tabular-nums; }
@@ -207,11 +211,28 @@ ha-card { box-sizing:border-box; display:block; height:100%; min-height:0; width
 .metric-value { margin-top:5px; font-size:clamp(16px,2.9cqi,22px); line-height:1.2; font-weight:740; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
 .metric-unit { font-size:12px; font-weight:500; color:#c7cfdb; white-space:nowrap; }
 .chart { border-radius:15px; padding:11px 12px 9px; background:rgba(0,0,0,.31); border:1px solid rgba(255,255,255,.12); }
-.chart-head { display:flex; align-items:center; gap:12px; justify-content:space-between; margin-bottom:4px; }
-.chart-title { font-size:12px; font-weight:650; } .chart-select { font:inherit; font-size:11px; background:rgba(255,255,255,.08); color:inherit; border:1px solid #454750; border-radius:8px; padding:4px 6px; }
-.chart-select option { color:#10121b; } .chart-svg { width:100%; height:102px; display:block; overflow:visible; }
+.chart-head { display:flex; align-items:flex-start; gap:8px; justify-content:space-between; margin-bottom:14px; }
+.chart-title { display:block; color:#c6cdd6; font-size:12px; font-weight:600; }
+.chart-current { display:block; margin-top:3px; font-size:22px; font-variant-numeric:tabular-nums; line-height:1.2; }
+.chart-current small { color:#b8c6ce; font-size:12px; font-weight:500; }
+.chart-select { font:inherit; font-size:11px; color:inherit; color-scheme:dark; background:#182229; border:1px solid #454750; border-radius:8px; padding:4px 6px; }
+.chart-grid { display:grid; grid-template-columns:max-content minmax(0,1fr); gap:6px 9px; }
+.chart-axis { color:#aab5c2; font-size:10px; font-variant-numeric:tabular-nums; }
+.chart-y { display:flex; flex-direction:column; justify-content:space-between; text-align:right; line-height:1; margin-block:-5px; }
+.chart-x { grid-column:2; display:flex; justify-content:space-between; gap:6px; white-space:nowrap; }
+.chart-plot { position:relative; min-width:0; height:104px; outline-offset:4px; }
+.chart-svg { width:100%; height:100%; display:block; overflow:visible; pointer-events:none; }
+.chart-guide,.chart-range,.chart-trace { fill:none; }
+.chart-guide { stroke:rgba(190,204,222,.15); }
+.chart-range { stroke:#80cfb0; stroke-opacity:.42; }
+.chart-trace { stroke:#71dfb0; stroke-width:1.25; stroke-linecap:round; stroke-linejoin:round; }
+.chart-latest { position:absolute; width:6px; height:6px; border-radius:50%; background:#a7f6cf; transform:translate(-50%,-50%); pointer-events:none; }
+.chart-latest.is-fresh::after { content:""; position:absolute; inset:0; border:1px solid #a7f6cf; border-radius:inherit; animation:ziggoSampleIn .75s ease-out both; }
+@keyframes ziggoSampleIn { from { opacity:.9; transform:scale(1); } to { opacity:0; transform:scale(3.6); } }
+.chart-tooltip { position:absolute; z-index:1; top:0; bottom:0; border-left:1px solid rgba(221,240,233,.45); pointer-events:none; }
+.chart-tooltip output { position:absolute; top:0; left:6px; padding:5px 7px; border-radius:6px; background:#18262c; color:#e8f7f0; border:1px solid #51696b; font-size:11px; white-space:nowrap; }
+.chart-tooltip.is-right output { left:auto; right:6px; }
 .chart-empty { display:grid; place-items:center; color:#a4acb8; font-size:12px; height:90px; text-align:center; }
-.chart-label { fill:#9da6b3; font-size:10px; } .chart-guide { stroke:rgba(190,204,222,.15); stroke-width:1; }
 .footer { margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:2px; }
 .footer-left { display:flex; align-items:center; gap:8px; min-width:0; font-size:11px; color:#b8bbca; }
 .dot { display:inline-block; height:8px; width:8px; background:#52db73; border-radius:50%; box-shadow:0 0 8px rgba(69,250,106,.4); flex:none; } .dot.bad { background:#ff656e;box-shadow:0 0 8px rgba(255,101,110,.4); } .dot.muted { background:#8b919e;box-shadow:none; } .dot.warn { background:#ffb044;box-shadow:0 0 8px rgba(255,176,68,.4); }
@@ -229,28 +250,26 @@ ha-card { box-sizing:border-box; display:block; height:100%; min-height:0; width
 .details { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(132px,100%),1fr)); gap:7px; }
 .details .metric { grid-column:auto; }
 .shell.no-modem .hero { grid-template-columns:minmax(140px,1fr) minmax(160px,1fr); }
-.shell.no-effects .glow,.shell.no-effects::after,.shell.no-effects .hardware::before { display:none; }
-@media(prefers-reduced-motion:reduce) { .shell::after { animation:none!important; } }
+.shell.no-effects .glow,.shell.no-effects .hardware::before { display:none; }
+@media(prefers-reduced-motion:reduce) { .chart-latest.is-fresh::after { animation:none; opacity:0; } }
 @container (max-width:620px) { .shell.no-modem .hero {grid-template-columns:1fr;} .shell { padding:13px; gap:10px; } .title { font-size:19px; } .hero { grid-template-columns:120px 1fr; } .hardware { height:150px; } .gauge { width:158px; } .status-stack { grid-column:1/-1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); } .metric { grid-column:span 3; } .metric.wide { grid-column:span 3; } .gauge-status { font-size:22px; } .details { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@container (max-width:380px) { .hero { grid-template-columns:1fr 1fr; gap:5px; } .hardware { height:125px; } .gauge { width:min(100%,137px); } .gauge::before { inset:9px; } .status-stack { grid-template-columns:1fr 1fr; } .status-item { padding:8px; } .status-value { font-size:11px; } .status-label { font-size:10px; } .brand { height:35px; width:35px; font-size:22px; } .metric-value { font-size:16px; } .chart-svg { height:85px; } .footer-left { font-size:10px; } }
+@container (max-width:380px) { .hero { grid-template-columns:1fr 1fr; gap:5px; } .hardware { height:125px; } .gauge { width:min(100%,137px); } .gauge::before { inset:9px; } .status-stack { grid-template-columns:1fr 1fr; } .status-item { padding:8px; } .status-value { font-size:11px; } .status-label { font-size:10px; } .brand { height:35px; width:35px; font-size:22px; } .metric-value { font-size:16px; } .chart-plot { height:88px; } .footer-left { font-size:10px; } }
 .shell.is-compact .hero { grid-template-columns:78px 1fr; } .shell.is-compact .hardware { height:120px; } .shell.is-compact .gauge { width:130px; } .shell.is-compact .gauge::before { inset:9px; } .shell.is-compact .status-stack { grid-column:1/-1; display:grid; grid-template-columns:1fr 1fr; } .shell.is-compact .metric { grid-column:span 3; } .shell.is-compact .gauge-status { font-size:20px; }
-@container (max-width:759px) {
-  .is-full .chart-label { font-size:14px; }
-}
 @container (min-width:760px) {
   .shell.is-full { padding:20px; gap:16px; }
   .is-full .hero { grid-template-columns:120px 180px minmax(0,1fr); gap:20px; }
   .shell.is-full.no-modem .hero { grid-template-columns:180px minmax(0,1fr); }
   .is-full .hardware { height:150px; }
   .is-full .gauge { width:min(100%,166px); }
-  .is-full .status-stack { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
-  .is-full .status-item { padding:10px 12px; }
-  .is-full .status-item:last-child { grid-column:1/-1; }
+  .is-full .status-stack { display:grid; width:100%; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .is-full .status-item { flex-direction:column; align-items:flex-start; padding:10px 13px; }
+  .is-full .status-value { font-size:16px; max-width:100%; }
   .is-full .metrics { grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); }
   .is-full .metrics > .metric { grid-column:auto; }
   .is-full .chart { padding:14px 16px 12px; }
   .is-full .chart-title { font-size:14px; }
-  .is-full .chart-svg { height:auto; }
+  .is-full .chart-axis { font-size:11px; }
+  .is-full .chart-plot { height:clamp(138px,15cqi,190px); }
   .is-full .chart-empty { height:clamp(150px,20cqi,240px); }
 }
 `;
@@ -459,60 +478,127 @@ function selectEntities(config, hass, registry) {
   }
   return mappings;
 }
-function graphMarkup(samples, locale, full = false) {
-  if (!Array.isArray(samples) || samples.length < 2)
+function historyLanguage(locale) {
+  return locale === NL ? "nl-NL" : "en-GB";
+}
+
+function graphMarkup(samples, locale, full, animateLatest) {
+  if (samples.length < 2)
     return `<div class="chart-empty">${escapeHTML(locale.history_unavailable)}</div>`;
-  const valid = samples.filter(
-    (p) => Number.isFinite(p.value) && Number.isFinite(p.time),
-  );
-  if (valid.length < 2)
-    return `<div class="chart-empty">${escapeHTML(locale.history_unavailable)}</div>`;
-  const mn = Math.min(...valid.map((p) => p.value)),
-    mx = Math.max(...valid.map((p) => p.value));
-  const margin = Math.max(0.6, (mx - mn) * 0.15),
-    low = mn - margin,
-    high = mx + margin;
-  const height = full ? 148 : 110;
-  const left = full ? 30 : 20,
-    right = 680,
-    top = full ? 12 : 7,
-    bottom = height - 20,
-    t0 = valid[0].time,
-    t1 = valid[valid.length - 1].time;
-  const topGuide = full ? top : 10;
-  const midGuide = (top + bottom) / 2;
-  const point = (p) => [
-    left + ((p.time - t0) / (t1 - t0 || 1)) * (right - left),
-    bottom - ((p.value - low) / (high - low)) * (bottom - top),
-  ];
-  const pts = valid.map(point);
-  const path = pts
-    .map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`)
+  const first = samples[0];
+  const latest = samples[samples.length - 1];
+  const duration = latest.time - first.time || 1;
+  const limit = full ? 84 : 36;
+  const buckets = new Map();
+  let min = Infinity;
+  let max = -Infinity;
+  for (const { time, value } of samples) {
+    min = Math.min(min, value);
+    max = Math.max(max, value);
+    const index = Math.min(limit - 1, Math.floor((time - first.time) / duration * limit));
+    const bucket = buckets.get(index) || {
+      count: 0, offset: 0, sum: 0, min: value, max: value,
+    };
+    bucket.count++;
+    bucket.offset += time - first.time;
+    bucket.sum += value;
+    bucket.min = Math.min(bucket.min, value);
+    bucket.max = Math.max(bucket.max, value);
+    buckets.set(index, bucket);
+  }
+  const padding = Math.max(0.5, (max - min) * 0.16);
+  const low = Math.floor((min - padding) * 2) / 2;
+  const high = Math.ceil((max + padding) * 2) / 2;
+  const x = (time) => ((time - first.time) / duration * 700).toFixed(1);
+  const y = (value) => ((high - value) / (high - low) * 100).toFixed(1);
+  const trend = Array.from(buckets.values(), (b) => ({
+    time: first.time + b.offset / b.count,
+    value: b.sum / b.count,
+  }));
+  const path = [first, ...trend, latest]
+    .map((p, i) => `${i ? "L" : "M"}${x(p.time)},${y(p.value)}`)
     .join(" ");
-  const area =
-    path +
-    ` L${pts[pts.length - 1][0].toFixed(1)},${bottom} L${left},${bottom} Z`;
-  const language = locale === NL ? "nl-NL" : "en-GB";
+  const extrema = [];
+  for (const [index, bucket] of Array.from(buckets.values()).entries()) {
+    const { time, value: average } = trend[index];
+    const lowPoint = average - bucket.min >= 0.9 ? bucket.min : average;
+    const highPoint = bucket.max - average >= 0.9 ? bucket.max : average;
+    if (lowPoint !== highPoint) {
+      extrema.push(`M${x(time)},${y(lowPoint)}V${y(highPoint)}`);
+    }
+  }
+  const language = historyLanguage(locale);
+  const number = new Intl.NumberFormat(language, { maximumFractionDigits: 2 });
   const dateOptions = { day: "2-digit", month: "short" };
   const timeOptions = { hour: "2-digit", minute: "2-digit" };
-  const start = full
-    ? new Date(t0).toLocaleString(language, { ...dateOptions, ...timeOptions })
-    : new Date(t0).toLocaleDateString(language, dateOptions);
-  const end = full
-    ? new Date(t1).toLocaleString(language, { ...dateOptions, ...timeOptions })
-    : new Date(t1).toLocaleTimeString(language, timeOptions);
-  const precision = full ? 1 : 0;
-  return `<svg class="chart-svg" viewBox="0 0 700 ${height}" role="img" aria-label="SNR ${escapeHTML(mn.toFixed(1))}–${escapeHTML(mx.toFixed(1))} dB">
-    <defs><linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#23dd6e" stop-opacity=".29"/><stop offset="1" stop-color="#23dd6e" stop-opacity=".01"/></linearGradient></defs>
-    <path class="chart-guide" d="M${left} ${topGuide}H${right} M${left} ${midGuide}H${right} M${left} ${bottom}H${right}"/>
-    <text class="chart-label" x="0" y="${topGuide + 4}">${high.toFixed(precision)}</text>
-    ${full ? `<text class="chart-label" x="0" y="${midGuide + 4}">${((low + high) / 2).toFixed(precision)}</text>` : ""}
-    <text class="chart-label" x="0" y="${bottom + 4}">${low.toFixed(precision)}</text>
-    <path d="${area}" fill="url(#area-grad)"/><path d="${path}" fill="none" stroke="#42e879" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="${pts[pts.length - 1][0].toFixed(1)}" cy="${pts[pts.length - 1][1].toFixed(1)}" r="3.5" fill="#80ff9d"/>
-    <text class="chart-label" x="${left}" y="${height - 3}">${escapeHTML(start)}</text>
-    <text class="chart-label" x="${right}" y="${height - 3}" text-anchor="end">${escapeHTML(end)}</text>
-  </svg>`;
+  const start = new Date(first.time);
+  const end = new Date(latest.time);
+  const dateTimeOptions = { ...dateOptions, ...timeOptions };
+  const endOptions = start.toDateString() === end.toDateString() ? timeOptions : dateTimeOptions;
+  return `<div class="chart-grid">
+    <div class="chart-axis chart-y" aria-hidden="true"><span>${number.format(high)}</span><span>${number.format((low + high) / 2)}</span><span>${number.format(low)}</span></div>
+    <div class="chart-plot" tabindex="0" role="group" aria-label="SNR ${number.format(min)}–${number.format(max)} dB">
+      <svg class="chart-svg" viewBox="0 0 700 100" preserveAspectRatio="none" aria-hidden="true">
+        <path class="chart-guide" vector-effect="non-scaling-stroke" d="M0,0H700 M0,50H700 M0,100H700"/>
+        <path d="${path} L${x(latest.time)},100 L0,100 Z" fill="#71dfb0" fill-opacity=".045"/>
+        <path class="chart-range" vector-effect="non-scaling-stroke" d="${extrema.join(" ")}"/>
+        <path class="chart-trace" vector-effect="non-scaling-stroke" d="${path}"/>
+      </svg>
+      <span class="chart-latest${animateLatest ? " is-fresh" : ""}" style="left:${Number(x(latest.time)) / 7}%;top:${y(latest.value)}%" aria-hidden="true"></span>
+      <div class="chart-tooltip" hidden><output></output></div>
+    </div>
+    <div class="chart-axis chart-x" aria-hidden="true"><span>${escapeHTML(start.toLocaleString(language, dateTimeOptions))}</span><span>${escapeHTML(end.toLocaleString(language, endOptions))}</span></div>
+  </div>`;
+}
+
+function bindChart(plot, samples, locale) {
+  const tooltip = plot.querySelector(".chart-tooltip");
+  const output = tooltip.querySelector("output");
+  const start = samples[0].time;
+  const duration = samples[samples.length - 1].time - start || 1;
+  const date = new Intl.DateTimeFormat(historyLanguage(locale), { dateStyle: "short", timeStyle: "short" });
+  const number = new Intl.NumberFormat(historyLanguage(locale), { maximumFractionDigits: 6 });
+  let index = samples.length - 1;
+  const show = (next) => {
+    index = next;
+    const sample = samples[index];
+    const position = (sample.time - start) / duration * 100;
+    tooltip.style.left = `${position}%`;
+    tooltip.classList.toggle("is-right", position > 50);
+    const label = `${number.format(sample.value)} dB · ${date.format(sample.time)}`;
+    if (output.textContent !== label) output.textContent = label;
+    tooltip.hidden = false;
+  };
+  const pick = (event) => {
+    const bounds = plot.getBoundingClientRect();
+    const target = start + (event.clientX - bounds.left) / bounds.width * duration;
+    let left = 0;
+    let right = samples.length - 1;
+    while (left < right) {
+      const middle = Math.floor((left + right) / 2);
+      if (samples[middle].time < target) left = middle + 1;
+      else right = middle;
+    }
+    if (left > 0 && target - samples[left - 1].time < samples[left].time - target) left--;
+    show(left);
+  };
+  plot.addEventListener("pointermove", (event) => {
+    if (event.pointerType === "mouse") pick(event);
+  });
+  plot.addEventListener("click", pick);
+  plot.addEventListener("pointerleave", (event) => {
+    if (event.pointerType === "mouse") tooltip.hidden = true;
+  });
+  plot.addEventListener("blur", () => { tooltip.hidden = true; });
+  plot.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      tooltip.hidden = true;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      const next = tooltip.hidden ? index : index + (event.key === "ArrowLeft" ? -1 : 1);
+      show(Math.max(0, Math.min(samples.length - 1, next)));
+    }
+  });
 }
 
 class ZiggoModemCard extends HTMLElement {
@@ -536,6 +622,7 @@ class ZiggoModemCard extends HTMLElement {
       show_modem: true,
       show_chart: true,
       glow: true,
+      animations: false,
       metrics: [...DEFAULT_METRICS],
     };
   }
@@ -633,24 +720,36 @@ class ZiggoModemCard extends HTMLElement {
       Date.now() - this._lastHistoryRequest < 300000
     )
       return;
+    const previousLatest = id === this._historyId
+      ? this._history.at(-1)?.time
+      : undefined;
+    const hours = this._chartHours;
     this._historyId = id;
     this._lastHistoryRequest = Date.now();
     this._inHistory = true;
     const now = new Date(),
-      start = new Date(now.getTime() - this._chartHours * 3600000);
+      start = new Date(now.getTime() - hours * 3600000);
     const query = `history/period/${encodeURIComponent(start.toISOString())}?filter_entity_id=${encodeURIComponent(id)}&end_time=${encodeURIComponent(now.toISOString())}&minimal_response=1&no_attributes=1`;
+    const isCurrent = () =>
+      this._mounted &&
+      this._config.show_chart &&
+      hours === this._chartHours &&
+      id === this._resolve().ds_snr;
     try {
       const result = await this._hass.callApi("GET", query);
-      if (!this._mounted || id !== this._resolve().ds_snr) return;
+      if (!isCurrent()) return;
       const list = Array.isArray(result?.[0]) ? result[0] : [];
       this._history = list
         .map((s) => ({
           time: new Date(s.last_changed || s.last_updated).getTime(),
           value: numberOrNull(s.state),
         }))
-        .filter((s) => s.value !== null && Number.isFinite(s.time));
+        .filter((s) => s.value !== null && Number.isFinite(s.time))
+        .sort((a, b) => a.time - b.time);
+      this._freshHistory =
+        previousLatest !== undefined && this._history.at(-1)?.time > previousLatest;
     } catch {
-      this._history = [];
+      if (isCurrent()) this._history = [];
     } finally {
       this._inHistory = false;
       this._lastSignature = "";
@@ -730,6 +829,17 @@ class ZiggoModemCard extends HTMLElement {
     const content = this.shadowRoot.getElementById("content");
     const scoreClamped =
       score === null ? null : Math.min(100, Math.max(0, score));
+    const visibleScore = scoreClamped === null ? 0 : scoreClamped * 0.75;
+    const previousScore = this._gaugeEntity === m.signal_quality
+      ? this._gaugeScore
+      : undefined;
+    this._gaugeScore = visibleScore;
+    this._gaugeEntity = m.signal_quality;
+    const animate =
+      this._config.animations === true &&
+      !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const freshHistory = this._freshHistory;
+    this._freshHistory = false;
     const tone = scoreStatus(scoreClamped),
       ring =
         tone === "bad" ? "#ff656e" : tone === "warn" ? "#ffb044" : "#59e77c";
@@ -751,6 +861,13 @@ class ZiggoModemCard extends HTMLElement {
         ? "bad"
         : statusClass(statusValue);
     const timestamp = this._state("last_successful_update");
+    const snrState = this._hass.states[m.ds_snr];
+    const snr = isAvailable(snrState) ? numberOrNull(snrState.state) : null;
+    const snrDisplay = snr === null
+      ? "—"
+      : new Intl.NumberFormat(historyLanguage(locale), {
+          maximumFractionDigits: 2,
+        }).format(snr);
     const metrics = (this._config.metrics || []).filter((key) => m[key]);
     const diagnostics = OPTIONAL_METRICS.filter((key) => m[key]);
     const hasDiagnostics = showQualityDetails || diagnostics.length > 0;
@@ -777,28 +894,44 @@ class ZiggoModemCard extends HTMLElement {
       : this._config.layout === "compact"
         ? "is-compact"
         : "";
-    content.innerHTML = `<ha-card><div class="shell ${this._config.show_modem ? "" : "no-modem "}${layoutClass} ${this._config.glow ? "is-glowing" : "no-effects"}">
+    const focusedChartControl = this.shadowRoot.activeElement?.matches(".chart-plot, .chart-select")
+      ? this.shadowRoot.activeElement.className
+      : "";
+    content.innerHTML = `<ha-card><div class="shell ${this._config.show_modem ? "" : "no-modem "}${layoutClass} ${this._config.glow ? "" : "no-effects"}">
       <div class="glow"></div>
       <header class="head"><div class="identity"><span class="brand" aria-hidden="true">Z</span><div class="heading"><div class="title">${escapeHTML(this._config.title || locale.title)}</div><div class="subtitle">Sagemcom · DOCSIS${docsisVersion ? ` ${escapeHTML(docsisVersion)}` : ""} · ha-ziggo-modem</div></div></div></header>
       ${
         hasData
           ? `<section class="hero">
         ${this._config.show_modem ? `<div class="hardware"><img src="${escapeHTML(CARD_IMAGE_URL)}" alt="Ziggo modem" loading="lazy"></div>` : ""}
-        <div class="gauge-wrap"><div class="gauge" style="--pct:${scoreClamped === null ? 0 : (scoreClamped * 0.75).toFixed(1)}%;--ring:${ring};"><div class="gauge-inner"><span class="gauge-overline">${escapeHTML(locale.signal_quality)}</span><span class="gauge-status ${tone}">${escapeHTML(qualValue)}</span><span class="gauge-score">${scoreClamped === null ? "—" : scoreClamped + " / 100"}</span></div></div></div>
+        <div class="gauge-wrap"><div class="gauge" style="--ring:${ring};">
+          <svg class="gauge-ring" viewBox="0 0 100 100" aria-hidden="true">
+            <circle class="gauge-track" cx="50" cy="50" r="46" pathLength="100" stroke-dasharray="75 25"/>
+            <circle class="gauge-progress" cx="50" cy="50" r="46" pathLength="100" stroke-dasharray="${visibleScore} 100"/>
+          </svg>
+          <div class="gauge-inner"><span class="gauge-overline">${escapeHTML(locale.signal_quality)}</span><span class="gauge-status ${tone}">${escapeHTML(qualValue)}</span><span class="gauge-score">${scoreClamped === null ? "—" : scoreClamped + " / 100"}</span></div></div></div>
         <div class="status-stack">
           ${this._statusItem("status", statusValue, statusClass(statusValue), locale)}
           ${this._statusItem("uptime", displayValue(this._state("uptime")), "", locale)}
           ${this._statusItem("internet_access", friendlyState(internet, "internet_access", locale), binaryClass(internet, "internet_access"), locale)}
           ${this._statusItem("cable_issue", friendlyState(cable, "cable_issue", locale), binaryClass(cable, "cable_issue"), locale)}
-          ${this._statusItem("last_successful_update", timeDisplay(timestamp, locale), "", locale)}
         </div>
       </section>
       ${metrics.length ? `<section class="metrics" aria-label="DOCSIS">${metrics.map((key) => this._metric(key, locale)).join("")}</section>` : ""}
-      ${this._config.show_chart ? `<section class="chart"><div class="chart-head"><span class="chart-title">↗ ${escapeHTML(locale.history)}</span><select class="chart-select" data-action="period" aria-label="History period"><option value="24" ${this._chartHours === 24 ? "selected" : ""}>${escapeHTML(locale.day)}</option><option value="168" ${this._chartHours === 168 ? "selected" : ""}>${escapeHTML(locale.week)}</option></select></div>${graphMarkup(this._history, locale, full)}</section>` : ""}`
+      ${this._config.show_chart ? `<section class="chart"><div class="chart-head"><div><span class="chart-title">${escapeHTML(locale.history)}</span><strong class="chart-current">${snrDisplay}${snr === null ? "" : " <small>dB</small>"}</strong></div><select class="chart-select" data-action="period" aria-label="${escapeHTML(locale.history_period)}"><option value="24" ${this._chartHours === 24 ? "selected" : ""}>${escapeHTML(locale.day)}</option><option value="168" ${this._chartHours === 168 ? "selected" : ""}>${escapeHTML(locale.week)}</option></select></div>${graphMarkup(this._history, locale, full, animate && freshHistory)}</section>` : ""}`
           : `<p class="alert">${escapeHTML(locale.no_data)}</p>`
       }
       <footer class="footer"><span class="footer-left"><span class="dot ${healthTone}" aria-hidden="true"></span>${escapeHTML(locale.updated)} · ${escapeHTML(timeDisplay(timestamp, locale))}</span>${hasDiagnostics ? `<button class="small-button" type="button" data-action="diagnostics" aria-haspopup="dialog">${escapeHTML(locale.diagnostics)}</button>` : ""}</footer>
     </div></ha-card>`;
+    if (animate && previousScore !== undefined && previousScore !== visibleScore) {
+      content.querySelector(".gauge-progress")?.animate(
+        { strokeDasharray: [`${previousScore} 100`, `${visibleScore} 100`] },
+        { duration: 450, easing: "ease-out" },
+      );
+    }
+    const plot = content.querySelector(".chart-plot");
+    if (plot) bindChart(plot, this._history, locale);
+    if (focusedChartControl) content.querySelector(`.${focusedChartControl}`)?.focus({ preventScroll: true });
     content
       .querySelector('[data-action="diagnostics"]')
       ?.addEventListener("click", () => dialog.showModal());
@@ -878,10 +1011,11 @@ class ZiggoModemCardEditor extends HTMLElement {
         ["show_modem", "modem"],
         ["show_chart", "chart"],
         ["glow", "glow"],
+        ["animations", "animations"],
       ]
         .map(
           ([k, label]) =>
-            `<label class="check"><input type="checkbox" data-key="${k}" ${this._config[k] !== false ? "checked" : ""}>${escapeHTML(locale[label])}</label>`,
+            `<label class="check"><input type="checkbox" data-key="${k}" ${this._config[k] ? "checked" : ""}>${escapeHTML(locale[label])}</label>`,
         )
         .join("")}
       <strong>${escapeHTML(locale.metrics)}</strong><div class="options">${[...DEFAULT_METRICS, ...OPTIONAL_METRICS].map((key) => `<label class="check"><input type="checkbox" data-metric="${key}" ${fields.includes(key) ? "checked" : ""}>${escapeHTML(locale[key] || key)}</label>`).join("")}</div>

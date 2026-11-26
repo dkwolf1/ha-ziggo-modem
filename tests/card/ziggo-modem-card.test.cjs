@@ -141,8 +141,10 @@ assert.match(
   editor.shadowRoot.innerHTML,
   /value="full" selected>Volledige breedte/,
 );
-editor.setConfig({ layout: "full", language: "en" });
+assert.match(editor.shadowRoot.innerHTML, /data-key="animations" >Animaties tonen/);
+editor.setConfig({ layout: "full", language: "en", animations: true });
 assert.match(editor.shadowRoot.innerHTML, /value="full" selected>Full width/);
+assert.match(editor.shadowRoot.innerHTML, /data-key="animations" checked>Show animations/);
 assert.equal(
   vm.runInContext("escapeHTML(`<img src=x onerror=alert(1)>`)", context),
   "&lt;img src=x onerror=alert(1)&gt;",
@@ -174,10 +176,21 @@ const samples = [
   { time: 2, value: 39.4 },
 ];
 const locale = vm.runInContext("NL", context);
-assert.match(graphMarkup(samples, locale), /viewBox="0 0 700 110"/);
-const fullChart = graphMarkup(samples, locale, true);
-assert.match(fullChart, /viewBox="0 0 700 148"/);
-assert.equal((fullChart.match(/<text /g) || []).length, 5);
+const denseHistory = Array.from({ length: 1000 }, (_, i) => ({
+  time: i * 60000,
+  value: i === 250 ? 33 : 36 + (i % 2),
+}));
+assert.match(graphMarkup(samples, locale), /class="chart-plot" tabindex="0"/);
+const fullChart = graphMarkup(denseHistory, locale, true, true);
+const compactChart = graphMarkup(denseHistory, locale, false, false);
+const lineSegments = (chart) =>
+  chart.match(/class="chart-trace" vector-effect="non-scaling-stroke" d="([^"]+)"/)[1].match(/L/g).length;
+assert.ok(lineSegments(fullChart) <= 85);
+assert.ok(lineSegments(compactChart) <= 37);
+assert.match(fullChart, /class="chart-range" vector-effect="non-scaling-stroke" d="M/);
+assert.match(fullChart, /aria-label="SNR 33–37 dB"/);
+assert.match(fullChart, /chart-latest is-fresh/);
+assert.doesNotMatch(compactChart, /chart-latest is-fresh/);
 console.log(
   "OK: Ziggo card mock rendering, registry mapping, HTML escaping, history SVG, Sections sizing",
 );

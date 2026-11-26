@@ -53,6 +53,10 @@ card's **Layout** tab to apply the new sizing.
 
 The header shows the modem-reported DOCSIS version when available. The optional
 24-hour and 7-day downstream SNR graph uses the Home Assistant Recorder history.
+Hover, tap, or focus the plot and use the arrow keys to inspect individual
+readings. Enable **Show animations** or set `animations: true` to animate
+signal-score changes and highlight new history readings. Animations are off by
+default and follow the browser's reduced-motion preference.
 
 ![Ziggo Modem Neon expanded and compact dashboard cards with example values](docs/ziggo-modem-neon.png)
 
@@ -297,6 +301,11 @@ gebruiken** in op het tabblad **Indeling**.
 
 Bovenaan staat de DOCSIS-versie als het modem die doorgeeft. De optionele grafiek
 toont 24 uur of 7 dagen aan downstream-SNR-metingen uit Home Assistant Recorder.
+Wijs de grafiek aan, tik erop of gebruik de pijltjestoetsen als de grafiek
+focus heeft om losse metingen te bekijken. Zet **Animaties tonen** aan of voeg
+`animations: true` toe voor beweging bij een gewijzigde signaalscore of een
+nieuwe meting in de grafiek. Animaties staan standaard uit en volgen de
+browservoorkeur voor minder beweging.
 
 ### Functies
 
