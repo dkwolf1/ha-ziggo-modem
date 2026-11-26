@@ -7,7 +7,7 @@ body:
       value: |
         You can report in English or Dutch. Je kunt je melding in het Nederlands of Engels schrijven.
 
-        Check the [existing issues](https://github.com/dkwolf1/ha-ziggo-modem/issues?q=is%3Aissue) for the same problem. For a problem with the Ziggo Modem Neon dashboard card, use the [card's issue tracker](https://github.com/dkwolf1/ziggo-modem-card/issues).
+        Check the [existing issues](https://github.com/dkwolf1/ha-ziggo-modem/issues?q=is%3Aissue) for the same problem. For a problem with the Neon dashboard card, include the exact message from the card preview if available.
 
   - type: textarea
     id: problem

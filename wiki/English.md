@@ -2,6 +2,45 @@
 
 [Wiki home](https://github.com/dkwolf1/ha-ziggo-modem/wiki/Home) | [Nederlands](https://github.com/dkwolf1/ha-ziggo-modem/wiki/Nederlands)
 
+## Neon dashboard card
+
+Ziggo Modem includes the Neon card from **v1.7.0**. After installing or updating
+the integration, restart Home Assistant, refresh the dashboard, and add
+**Ziggo Modem · Neon** from the card picker. Existing dashboards can keep
+`type: custom:ziggo-modem-card` and their card settings.
+
+### Layout and chart
+
+From **v1.8.0**, use **Full width** in the card editor or `layout: full` in YAML.
+On a Sections dashboard, widen the section itself to fill several columns.
+For a manually sized card, turn on **Use recommended size** in the card's
+**Layout** tab. Automatic, Compact and Expanded are also available.
+
+The chart shows the current downstream SNR and either 24 hours or 7 days of
+Recorder history. Hover, tap, or focus the plot and use the arrow keys to see
+the value and time of a reading. If the plot is empty while the live value
+appears, check that Recorder includes the selected downstream SNR sensor and
+has recorded at least two readings.
+
+**Show animations** is off by default. Enable it for the moving signal ring,
+the pulse on new chart readings and the online light. Turn on **Enable glow
+effects** as well for the moving accent along the top. The animations follow
+the browser's reduced-motion preference.
+
+### Configuration error
+
+1. Open the card editor and read the detailed error in its preview.
+2. If it says `Custom element doesn't exist: ziggo-modem-card`, check that the
+   Ziggo Modem integration is loaded. Restart Home Assistant after an update
+   and refresh the browser using **Ctrl+F5** on Windows.
+3. If you previously installed the standalone card, remove that package and
+   any leftover resource for it under **Settings → Dashboards → Resources**
+   or in your YAML resources. Keep the bundled integration and existing
+   dashboard card.
+4. If the error returns, include the exact preview message, the integration
+   and Home Assistant versions, and whether it happens when opening or editing
+   the dashboard. [Report the problem](https://github.com/dkwolf1/ha-ziggo-modem/issues/new/choose)
+
 ## What the integration knows
 
 Home Assistant logs in to the **local modem API** over HTTPS and polls six
