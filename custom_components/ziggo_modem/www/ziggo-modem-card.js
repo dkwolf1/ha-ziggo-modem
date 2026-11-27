@@ -614,7 +614,23 @@ function bindChart(plot, samples, locale) {
 class ZiggoModemCard extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: "open" });
+    const root = this.attachShadow({ mode: "open" });
+    root.innerHTML = `<style>${CSS}</style><div id="content"></div>
+      <dialog class="diagnostics-dialog" aria-labelledby="diagnostics-title">
+        <form method="dialog" class="diagnostics-header">
+          <h2 id="diagnostics-title"></h2>
+          <button class="small-button" type="submit" autofocus></button>
+        </form>
+        <section class="quality-details" hidden>
+          <h3></h3>
+          <p data-quality-reason></p>
+          <p data-quality-context></p>
+        </section>
+        <div class="details"></div>
+      </dialog>`;
+    root.querySelector("dialog")?.addEventListener("close", () => {
+      root.querySelector('[data-action="diagnostics"]')?.focus();
+    });
     this._registry = [];
     this._history = { key: "", samples: [] };
     this._chartHours = 24;
@@ -824,24 +840,6 @@ class ZiggoModemCard extends HTMLElement {
     ]);
     if (signature === this._lastSignature) return;
     this._lastSignature = signature;
-    if (!this.shadowRoot.querySelector("style")) {
-      this.shadowRoot.innerHTML = `<style>${CSS}</style><div id="content"></div>
-        <dialog class="diagnostics-dialog" aria-labelledby="diagnostics-title">
-          <form method="dialog" class="diagnostics-header">
-            <h2 id="diagnostics-title"></h2>
-            <button class="small-button" type="submit" autofocus></button>
-          </form>
-          <section class="quality-details" hidden>
-            <h3></h3>
-            <p data-quality-reason></p>
-            <p data-quality-context></p>
-          </section>
-          <div class="details"></div>
-        </dialog>`;
-      this.shadowRoot.querySelector("dialog")?.addEventListener("close", () => {
-        this.shadowRoot.querySelector('[data-action="diagnostics"]')?.focus();
-      });
-    }
     const content = this.shadowRoot.getElementById("content");
     const scoreClamped =
       score === null ? null : Math.min(100, Math.max(0, score));
