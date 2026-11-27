@@ -26,7 +26,7 @@ class MockElement {
       querySelector: (name) =>
         name === "style" && html.includes("<style>") ? {} : null,
       querySelectorAll: () => [],
-      getElementById: () => this._content,
+      getElementById: (id) => html.includes(`id="${id}"`) ? this._content : null,
       get innerHTML() {
         return html;
       },
@@ -63,6 +63,20 @@ const context = vm.createContext({
   console,
 });
 vm.runInContext(js, context);
+test("the card renders when another stylesheet is present before the first render", () => {
+  const styledCard = new registered["ziggo-modem-card"]();
+  const externalStyles = "<style>:host { --example-theme-color: red; }</style>";
+  styledCard.shadowRoot.innerHTML += externalStyles;
+  styledCard.setConfig({ type: "custom:ziggo-modem-card", show_chart: false });
+  styledCard.hass = {
+    states: {
+      "sensor.ziggo_modem_modem_status": { state: "Operational" },
+    },
+  };
+  assert.match(styledCard._content.innerHTML, /Online/);
+  assert.ok(styledCard.shadowRoot.innerHTML.includes(externalStyles));
+});
+
 const card = new registered["ziggo-modem-card"]();
 card.setConfig({ type: "custom:ziggo-modem-card", show_chart: false });
 card.hass = {
